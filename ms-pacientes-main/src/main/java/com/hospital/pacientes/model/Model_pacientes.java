@@ -33,7 +33,7 @@ public class Model_pacientes {
     @NotNull(message= "La edad del pacientes es obligatoria")
     @Min(value=0, message ="la edad no puede ser negativa")
     @Max(value=150,message ="La edad maxima debe ser coherente a la realidad" )
-    private int edad;
+    private Integer edad;
 
     @NotBlank(message= "El numero de telefono del pacientes es obligatorio")
     private String telefono;

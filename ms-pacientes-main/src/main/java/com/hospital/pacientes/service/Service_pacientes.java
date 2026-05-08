@@ -5,9 +5,11 @@ import com.hospital.pacientes.repository.Repository_pacientes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.hospital.pacientes.exception.DuplicadoException;
 import com.hospital.pacientes.exception.ResourceNotFoundExceptione;
 import com.hospital.pacientes.model.Model_pacientes;
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -21,16 +23,26 @@ public class Service_pacientes {
     }
 
     public Model_pacientes guardar(Model_pacientes pacientes){
+        if(repository.findByRut(pacientes.getRut()).isPresent()){
+            throw new DuplicadoException("Ya existe un paciente con el RUT: " + pacientes.getRut());
+        }
         return repository.save(pacientes);
     }
+
     public Model_pacientes obtenerPorId(Long id){
         return repository.findById(id).orElseThrow(()-> new ResourceNotFoundExceptione("Paciente no encontrado con ID"+id));
     }
+
     public Model_pacientes obtenerPorRut(String rut){
         return repository.findByRut(rut).orElseThrow(()-> new ResourceNotFoundExceptione("Paciente no encontrado con Rut"+rut));
     }
+
     public Model_pacientes actualizar(long id, Model_pacientes nuevo){
-        return repository.findById(id).map(pacientes->{
+        Model_pacientes pacientes = repository.findById(id).orElseThrow(()-> new ResourceNotFoundExceptione("No se puede actualizar, ID inexistente: " + id));
+        Optional<Model_pacientes> existente = repository.findByRut(nuevo.getRut());
+        if(existente.isPresent() && !existente.get().getId().equals(id)){
+            throw new DuplicadoException("Ya existe un paciente con el RUT: ");
+        }
             pacientes.setRut(nuevo.getRut());
             pacientes.setNombre(nuevo.getNombre());
             pacientes.setApellido(nuevo.getApellido());
@@ -38,10 +50,12 @@ public class Service_pacientes {
             pacientes.setTelefono(nuevo.getTelefono());
             pacientes.setPrevision(nuevo.getPrevision());
             return repository.save(pacientes);
-        }).orElseThrow(()-> new ResourceNotFoundExceptione("No se puede actualizar, id inexistente"+id));
-    }
+        }
+    
     public void eliminar(Long id){
-        Model_pacientes pacientes= repository.findById(id).orElseThrow(()-> new ResourceNotFoundExceptione("No se encontro ninguna id por eliminar con:" + id));
-        repository.delete(pacientes);
+        if(!repository.existsById(id)){
+            throw new ResourceNotFoundExceptione("No se puede eliminar, ID inexistente: " + id);
+        }
+        repository.deleteById(id);
     }
 }
