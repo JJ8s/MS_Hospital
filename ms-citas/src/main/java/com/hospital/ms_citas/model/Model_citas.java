@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -35,7 +37,8 @@ public class Model_citas {
     private LocalTime hora;
 
     @NotBlank(message = "EL estado es obligatorio (Pendiente, cancelado, realizado)")
-    private String estado;
+    @Enumerated(EnumType.STRING)
+    private EstadoCita estado;
     
     private String observaciones;
 
