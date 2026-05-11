@@ -5,9 +5,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.hospital.ms_urgencia.client.PacienteCliente;
+import com.hospital.ms_urgencia.exception.NivelTriageInvalidoException;
 import com.hospital.ms_urgencia.exception.ResourceNotFoundExceptione;
 import com.hospital.ms_urgencia.model.Model_urgencias;
+import com.hospital.ms_urgencia.model.NivelTriage;
 import com.hospital.ms_urgencia.repository.Repository_urgencias;
+
+import feign.FeignException;
 
 @Service
 public class Service_urgencia {
@@ -22,17 +26,21 @@ public class Service_urgencia {
     }
 
     public Model_urgencias guardar(Model_urgencias urgencias){
-        /*fixeado para evitar errores al probar inicializar datos
         try{
             pacienteCliente.obtenerPacientePorId(urgencias.getPacienteId());
-        }catch(Exception e){
-            throw new ResourceNotFoundExceptione("Error: Paciente con id " + urgencias.getPacienteId() + " no encontrado");
-        }*/
+        }catch(FeignException.NotFound e){
+            throw new ResourceNotFoundExceptione("Paciente con id " + urgencias.getPacienteId() + " no existe");
+        }
         return repository_urgencias.save(urgencias);
     }
     public Model_urgencias actualizarTriage(Long id, String nuevoNivel){
-        Model_urgencias u = repository_urgencias.findById(id).orElseThrow(()-> new ResourceNotFoundExceptione("Registro de urgencias no encontrado"));
-        u.setNivelTriage(nuevoNivel);
+        Model_urgencias u = repository_urgencias.findById(id).orElseThrow(()-> new ResourceNotFoundExceptione("Registro de urgencias no encontrado " + id));
+        try{
+            NivelTriage nivel = NivelTriage.valueOf(nuevoNivel.toUpperCase());
+            u.setNivelTriage(nivel);
+        }catch(IllegalArgumentException e){
+            throw new NivelTriageInvalidoException("Nivel de triage no valido: " + nuevoNivel + ". Valores permitidos: ROJO, NARANJA, AMARILLO, VERDE, AZUL");
+        }
         return repository_urgencias.save(u);    
     }
     
