@@ -19,11 +19,12 @@ public class Model_urgencias {
     private Long pacienteId;
 
     @NotBlank(message= "El nivel de triage es obligatorio")
-    private String nivelTriage;
+    @Enumerated(EnumType.STRING)
+    private NivelTriage nivelTriage;
 
     @NotBlank(message = "El motivo de ingreso es obligatorio")
     private String motivoIngreso;
 
     private LocalDateTime fechaIngreso = LocalDateTime.now();
-    private String estadoActual;
+    private String estadoActual = "EN_ESPERA";
 }
