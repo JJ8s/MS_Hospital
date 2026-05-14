@@ -22,12 +22,11 @@ public class ProductoService {
     // Guardar un producto nuevo con validaciones de negocio
     @Transactional
     public Producto guardar(Producto producto) {
-        // 1. Evitar duplicados por nombre
+
         if (productoRepository.existsByNombre(producto.getNombre())) {
             throw new RuntimeException("Error de Negocio: El producto '" + producto.getNombre() + "' ya está registrado.");
         }
-        
-        // 2. Evitar duplicados por lote (Muy importante en hospitales)
+
         if (productoRepository.findByLote(producto.getLote()).isPresent()) {
             throw new RuntimeException("Error de Trazabilidad: El lote '" + producto.getLote() + "' ya existe.");
         }
@@ -35,18 +34,16 @@ public class ProductoService {
         return productoRepository.save(producto);
     }
 
-    // Buscar por ID con mensaje profesional
+    // Buscar por ID 
     public Producto buscarPorId(Long id) {
         return productoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Stock Error: No se encontró el producto con ID " + id));
     }
 
-    // Actualizar producto (Lógica de actualización segura)
+    // Actualizar producto 
     @Transactional
     public Producto actualizar(Long id, Producto detallesActualizados) {
         Producto productoExistente = buscarPorId(id);
-        
-        // Actualizamos solo los campos necesarios manteniendo el ID original
         productoExistente.setNombre(detallesActualizados.getNombre());
         productoExistente.setLote(detallesActualizados.getLote());
         productoExistente.setFechaVencimiento(detallesActualizados.getFechaVencimiento());
@@ -56,7 +53,7 @@ public class ProductoService {
         return productoRepository.save(productoExistente);
     }
 
-    // Lógica especial: Ajustar Stock (para ms-recetas y ms-facturacion)
+    // Ajustar Stock 
     @Transactional
     public void reducirStock(Long id, Integer cantidad) {
         Producto producto = buscarPorId(id);
@@ -71,7 +68,7 @@ public class ProductoService {
     public void reponerStock(Long id, Integer cantidad) {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
-        producto.setStock(producto.getStock() + cantidad); // SUMAMOS
+        producto.setStock(producto.getStock() + cantidad); 
         productoRepository.save(producto);
     }
 
