@@ -4,6 +4,10 @@
 - Jordy Solis
 - Anderson Ovando
 - Matias Javier
+## Video de los Microservicios 
+
+[Pruebas de funcionamiento de Microservicios](https://youtu.be/3vS0kl0Pq2E?si=9QnQGhsAi4bDYB4D)
+
 
 ## Descripción
 Sistema hospitalario basado en arquitectura de microservicios
