@@ -2,7 +2,7 @@
 
 ## Integrantes
 - Jordy Solis
-- Anderson Huaiquinao 
+- Anderson Ovando
 - Matias Javier
 
 ## Descripción
