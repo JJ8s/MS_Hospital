@@ -27,9 +27,11 @@ public class RecetaService {
     @Transactional
     public Receta guardar(Receta receta) {
         try {
-            productoClient.reducirStock(receta.getProductoId(), 1); 
+            Receta recetaGuardada = recetaRepository.save(receta);
             
-            return recetaRepository.save(receta);
+            productoClient.reducirStock(recetaGuardada.getProductoId(), recetaGuardada.getCantidad()); 
+            
+            return recetaGuardada;
             
         } catch (Exception e) {
             throw new RuntimeException("No se pudo emitir la receta: " + e.getMessage());
