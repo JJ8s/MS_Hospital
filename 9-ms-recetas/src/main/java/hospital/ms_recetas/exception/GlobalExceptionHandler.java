@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 1. errores de validación de campos 
+    // 1 errores de validación de campos 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex, WebRequest request) {
         String mensajeError = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    // 2. errores de lógica y comunicación (Stock insuficiente, Receta no encontrada)
+    // 2 errores de lógica y comunicación 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex, WebRequest request) {
         HttpStatus status = ex.getMessage().toLowerCase().contains("no existe") 
@@ -44,7 +44,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, status);
     }
 
-    // 3. errores globales de servidor 
+    // 3 errores globales de servidor 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
         ErrorResponse error = new ErrorResponse(
