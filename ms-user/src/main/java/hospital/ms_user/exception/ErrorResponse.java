@@ -13,7 +13,6 @@ public class ErrorResponse {
     private String mensaje;
     private long timestamp = System.currentTimeMillis();
 
-    // Este es el constructor que usaremos en el Handler
     public ErrorResponse(int status, String mensaje) {
         this.status = status;
         this.mensaje = mensaje;
@@ -21,5 +20,5 @@ public class ErrorResponse {
     }
 }
     
-    // Genera sus Getters y Setters
+
 

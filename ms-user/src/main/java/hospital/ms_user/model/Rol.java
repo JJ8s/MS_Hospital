@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "roles")
 @Data
-@NoArgsConstructor  // <--- FUNDAMENTAL para que Jackson funcione
-@AllArgsConstructor // <--- Recomendado
+@NoArgsConstructor  
+@AllArgsConstructor 
 public class Rol {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
