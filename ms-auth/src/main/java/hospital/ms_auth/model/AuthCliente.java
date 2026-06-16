@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient(name = "ms-user")
 public interface AuthCliente {
 
-    // Cambia "/api/users/search" por la ruta que tengas en ms-user para buscar por username
+    // se cambia "/api/users/search" por la ruta que tengas en ms-user para buscar por username
     @GetMapping("/api/users/search")
     Map<String, Object> getUserByUsername(@RequestParam("username") String username);
     

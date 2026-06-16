@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JwtUtils {
-    // LA MISMA QUE EN MS-MEDICOS (32 caracteres)
+    // (32 caracteres)
     private final String SECRET_KEY = "12345678901234567890123456789012";
 
     public String createToken(String username, List<String> roles) {

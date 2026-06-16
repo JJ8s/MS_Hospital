@@ -7,7 +7,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
 
-@SpringBootApplication(exclude = { SecurityAutoConfiguration.class }) // <--- ⚠️ REEMPLAZA ESTA LÍNEA
+@SpringBootApplication(exclude = { SecurityAutoConfiguration.class }) // 
 @EnableDiscoveryClient
 @EnableFeignClients
 public class MsAuthApplication {

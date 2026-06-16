@@ -24,7 +24,6 @@ public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String
     String username = credentials.get("username");
     String password = credentials.get("password");
 
-    // Eliminamos el try-catch. El GlobalExceptionHandler hará el trabajo.
     String token = authService.login(username, password);
     
     Map<String, String> response = new HashMap<>();

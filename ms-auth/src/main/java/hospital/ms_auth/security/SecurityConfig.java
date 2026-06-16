@@ -18,7 +18,7 @@ public class SecurityConfig {
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/users/**").permitAll() // Para poder crear médicos/admins
+                .requestMatchers("/api/users/**").permitAll() // Para poder crear médicos/admins/pacientes
                 .anyRequest().authenticated()
             );
         return http.build();

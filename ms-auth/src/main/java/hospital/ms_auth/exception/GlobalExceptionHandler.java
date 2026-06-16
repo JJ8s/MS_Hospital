@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    // Captura credenciales incorrectas (401)
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> manejarUnauthorized(UnauthorizedException ex) {
         ErrorResponse error = new ErrorResponse(
@@ -17,7 +16,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
-    // EXTRA: Captura si el ms-user está caído (FeignException)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> manejarErroresGenerales(Exception ex) {
         ErrorResponse error = new ErrorResponse(
