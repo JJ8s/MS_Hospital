@@ -8,31 +8,32 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import hospital.ms_user.exception.BadRequestException;
-import hospital.ms_user.model.Usuario;
-import hospital.ms_user.repository.UsuarioRepository;
+import hospital.ms_user.model.User;
+import hospital.ms_user.repository.UserRepository;
+
 
 
 @Service
-public class UsuarioService {
+public class UserService {
 
     @Autowired
-    private UsuarioRepository userRepository;
+    private UserRepository userRepository;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public List<Usuario> findAll() {
+    public List<User> findAll() {
         return userRepository.findAll();
     }
 
-    public Optional<Usuario> findById(Long id) {
+    public Optional<User> findById(Long id) {
         return userRepository.findById(id);
     }
 
-    public Optional<Usuario> findByUsername(String username) {
+    public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
-    public Usuario save(Usuario user) {
+    public User save(User user) {
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new BadRequestException("El nombre de usuario '" + user.getUsername() + "' ya está en uso");
         }

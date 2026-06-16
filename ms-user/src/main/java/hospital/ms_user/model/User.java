@@ -1,7 +1,6 @@
 package hospital.ms_user.model;
 
 import java.util.Set;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -11,7 +10,7 @@ import lombok.Data;
 @Entity
 @Table(name = "users")
 @Data
-public class Usuario {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,6 +29,10 @@ public class Usuario {
     @Column(nullable = false)
     private String password;
 
+    // AÑADE ESTA LÍNEA PARA QUE EL MAPPER FUNCIONE
+    @Column(nullable = false)
+    private boolean active; 
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_roles",
@@ -37,6 +40,4 @@ public class Usuario {
         inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Rol> roles;
-
-    
 }

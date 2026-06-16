@@ -14,42 +14,42 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import hospital.ms_user.model.Usuario;
-import hospital.ms_user.service.UsuarioService;
+import hospital.ms_user.model.User;
+import hospital.ms_user.service.UserService;
 import jakarta.validation.Valid;
 
 
 @RestController
 @RequestMapping("/api/users")
-public class UsuarioController {
+public class UserController {
 
     @Autowired
-    private UsuarioService userService;
+    private UserService userService;
 
     @GetMapping
-    public List<Usuario> getAllUsers() {
+    public List<User> getAllUsers() {
         return userService.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> getUserById(@PathVariable Long id) {
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
         return userService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Usuario> getUserByUsername(@RequestParam String username) {
+    public ResponseEntity<User> getUserByUsername(@RequestParam String username) {
         return userService.findByUsername(username)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Usuario> createUser(@Valid @RequestBody Usuario user) {
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
     
-    Usuario savedUser = userService.save(user);
-         return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
+    User savedUser = userService.save(user);
+        return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{id}")
