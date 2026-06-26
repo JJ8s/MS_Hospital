@@ -22,13 +22,19 @@ public class ProductoService {
     // Guardar un producto nuevo con validaciones de negocio
     @Transactional
     public Producto guardar(Producto producto) {
-
+        // 1. Regla de Negocio: Evitar duplicados por nombre
         if (productoRepository.existsByNombre(producto.getNombre())) {
             throw new RuntimeException("Error de Negocio: El producto '" + producto.getNombre() + "' ya está registrado.");
         }
 
+        // 2. Regla de Trazabilidad: Lote único
         if (productoRepository.findByLote(producto.getLote()).isPresent()) {
             throw new RuntimeException("Error de Trazabilidad: El lote '" + producto.getLote() + "' ya existe.");
+        }
+
+        // 3. Regla de Integridad: Stock no negativo 
+        if (producto.getStock() == null || producto.getStock() < 0) {
+            throw new IllegalArgumentException("El stock no puede ser negativo");
         }
 
         return productoRepository.save(producto);
