@@ -2,6 +2,12 @@ package hospital.ms_recetas.controller;
 
 import hospital.ms_recetas.model.Receta;
 import hospital.ms_recetas.service.RecetaService;
+import hospital.ms_recetas.exception.ErrorResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,84 +15,66 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/recetas")
+@Tag(name = "Receta Controller", description = "API para la gestión de recetas médicas y prescripciones hospitalarias")
 public class RecetaController {
 
     @Autowired
     private RecetaService recetaService;
 
-    // 1. Listar todas las recetas 
+    @Operation(summary = "Listar todas las recetas", description = "Retorna el historial completo de recetas emitidas en el sistema.")
+    @ApiResponse(responseCode = "200", description = "Lista recuperada exitosamente")
     @GetMapping
-    public ResponseEntity<List<Receta>> listar() {
-        return ResponseEntity.ok(recetaService.listarTodas());
+    public List<Receta> listar() {
+        return recetaService.listarTodas();
     }
 
-    // 2. Crear una receta nueva 
+    @Operation(summary = "Emitir nueva receta", description = "Registra una prescripción médica validando stock en el inventario mediante comunicación REST.")
+    @ApiResponse(responseCode = "201", description = "Receta emitida con éxito")
+    @ApiResponse(responseCode = "400", description = "Error en los datos de la receta o stock insuficiente", 
+                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping
-    public ResponseEntity<?> crear(@Valid @RequestBody Receta receta) {
-        try {
-            Receta nuevaReceta = recetaService.guardar(receta);
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "¡Receta emitida con éxito! Stock actualizado en inventario.");
-            respuesta.put("receta", nuevaReceta);
-            return new ResponseEntity<>(respuesta, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body("Error al emitir receta: " + e.getMessage());
-        }
+    public ResponseEntity<Receta> crear(@Valid @RequestBody Receta receta) {
+        
+        return new ResponseEntity<>(recetaService.guardar(receta), HttpStatus.CREATED);
     }
 
-    // 3. Buscar receta por ID
+    @Operation(summary = "Buscar receta por ID", description = "Obtiene los detalles de una receta específica mediante su identificador único.")
+    @ApiResponse(responseCode = "200", description = "Receta encontrada")
+    @ApiResponse(responseCode = "404", description = "Receta no encontrada", 
+                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerPorId(@PathVariable Long id) {
-        try {
-            Receta receta = recetaService.obtenerPorId(id);
-            return ResponseEntity.ok(receta);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("Error: No se encontró la receta #" + id);
-        }
+    public ResponseEntity<Receta> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(recetaService.obtenerPorId(id));
     }
 
-    // 4. Buscar todas las recetas de un Paciente 
+    @Operation(summary = "Listar recetas por Paciente", description = "Retorna todas las recetas asociadas a un ID de paciente específico.")
+    @ApiResponse(responseCode = "200", description = "Lista de recetas del paciente recuperada")
+    @ApiResponse(responseCode = "404", description = "El paciente no tiene recetas registradas", 
+                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/paciente/{pacienteId}")
-    public ResponseEntity<?> listarPorPaciente(@PathVariable Long pacienteId) {
-        List<Receta> recetas = recetaService.obtenerPorPaciente(pacienteId);
-        if (recetas.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("El paciente #" + pacienteId + " no tiene recetas registradas.");
-        }
-        return ResponseEntity.ok(recetas);
+    public ResponseEntity<List<Receta>> listarPorPaciente(@PathVariable Long pacienteId) {
+        return ResponseEntity.ok(recetaService.obtenerPorPaciente(pacienteId));
     }
 
-    // 5. Eliminar o anular receta 
+    @Operation(summary = "Anular o eliminar receta", description = "Elimina físicamente una receta del sistema tras verificar su existencia.")
+    @ApiResponse(responseCode = "204", description = "Receta anulada correctamente")
+    @ApiResponse(responseCode = "404", description = "No se puede anular una receta inexistente", 
+                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> eliminar(@PathVariable Long id) {
-        try {
-            recetaService.eliminar(id);
-            return ResponseEntity.ok("La receta #" + id + " ha sido anulada correctamente.");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("No se pudo eliminar: " + e.getMessage());
-        }
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        recetaService.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 
-    // 6. Actualizar indicaciones de la receta
+    @Operation(summary = "Actualizar indicaciones", description = "Permite modificar las instrucciones médicas de una receta ya emitida.")
+    @ApiResponse(responseCode = "200", description = "Indicaciones actualizadas exitosamente")
+    @ApiResponse(responseCode = "404", description = "ID de receta no válido o inexistente", 
+                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizar(@PathVariable Long id, @Valid @RequestBody Receta recetaDetalles) {
-        try {
-            Receta recetaActualizada = recetaService.actualizarIndicaciones(id, recetaDetalles);
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Indicaciones actualizadas correctamente.");
-            respuesta.put("receta", recetaActualizada);
-            return ResponseEntity.ok(respuesta);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("Error al actualizar: " + e.getMessage());
-        }
+    public ResponseEntity<Receta> actualizar(@PathVariable Long id, @Valid @RequestBody Receta recetaDetalles) {
+        return ResponseEntity.ok(recetaService.actualizarIndicaciones(id, recetaDetalles));
     }
 }
