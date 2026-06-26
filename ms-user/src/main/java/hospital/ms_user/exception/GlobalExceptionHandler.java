@@ -19,8 +19,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> manejarErrorJson(org.springframework.http.converter.HttpMessageNotReadableException ex) {
-         ErrorResponse error = new ErrorResponse(
-             HttpStatus.BAD_REQUEST.value(),
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(),
             "Error en el formato del JSON: Revisa que los campos y comas estén correctos"
     );
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
