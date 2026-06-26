@@ -120,16 +120,18 @@ public class ProductoServiceTest {
         // GIVEN
         Producto productoInvalido = new Producto();
         productoInvalido.setNombre("Jarabe");
-        productoInvalido.setStock(-5); // Stock inválido
+        productoInvalido.setLote("L-999"); 
+        productoInvalido.setStock(-5); 
 
-        // WHEN & THEN
-        // Verificamos que se lance la excepción IllegalArgumentException
+        
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             productoService.guardar(productoInvalido);
         });
 
-        assertEquals("El stock no puede ser negativo", exception.getMessage());
-        // Verificamos que el repositorio NUNCA se llamó, ya que la regla de negocio lo detuvo
+        
+        assertEquals("Integridad de Datos: El stock no puede ser negativo (-5).", exception.getMessage());
+
+        
         verify(productoRepository, never()).save(any(Producto.class));
     }
 }

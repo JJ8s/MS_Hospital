@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -14,42 +16,49 @@ public class ProductoService {
     @Autowired
     private ProductoRepository productoRepository;
 
-    // Listar todos los productos
     public List<Producto> listarTodos() {
         return productoRepository.findAll();
     }
 
-    // Guardar un producto nuevo con validaciones de negocio
     @Transactional
     public Producto guardar(Producto producto) {
-        // 1. Regla de Negocio: Evitar duplicados por nombre
+        // 1. Regla: Evitar duplicados por nombre
         if (productoRepository.existsByNombre(producto.getNombre())) {
             throw new RuntimeException("Error de Negocio: El producto '" + producto.getNombre() + "' ya está registrado.");
         }
 
-        // 2. Regla de Trazabilidad: Lote único
-        if (productoRepository.findByLote(producto.getLote()).isPresent()) {
-            throw new RuntimeException("Error de Trazabilidad: El lote '" + producto.getLote() + "' ya existe.");
-        }
+        // 2. Regla de Trazabilidad: Lote único [2]
+        validarLoteUnico(producto.getLote());
 
-        // 3. Regla de Integridad: Stock no negativo 
-        if (producto.getStock() == null || producto.getStock() < 0) {
-            throw new IllegalArgumentException("El stock no puede ser negativo");
-        }
+        // 3. Regla de Integridad: Stock inicial no negativo
+        validarStockNoNegativo(producto.getStock());
 
         return productoRepository.save(producto);
     }
 
-    // Buscar por ID 
+    @Transactional(readOnly = true)
     public Producto buscarPorId(Long id) {
-        return productoRepository.findById(id)
+        Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Stock Error: No se encontró el producto con ID " + id));
+        
+        // Verifica si el producto está próximo a vencer (menos de 30 días)
+        alertarSiVencePronto(producto);
+        
+        return producto;
     }
 
-    // Actualizar producto 
     @Transactional
     public Producto actualizar(Long id, Producto detallesActualizados) {
         Producto productoExistente = buscarPorId(id);
+
+        // Validar que el nuevo stock no sea negativo antes de actualizar [2]
+        validarStockNoNegativo(detallesActualizados.getStock());
+
+        //Si el lote cambia, verificar que el nuevo lote no esté ocupado
+        if (!productoExistente.getLote().equals(detallesActualizados.getLote())) {
+            validarLoteUnico(detallesActualizados.getLote());
+        }
+
         productoExistente.setNombre(detallesActualizados.getNombre());
         productoExistente.setLote(detallesActualizados.getLote());
         productoExistente.setFechaVencimiento(detallesActualizados.getFechaVencimiento());
@@ -57,6 +66,30 @@ public class ProductoService {
         productoExistente.setStock(detallesActualizados.getStock());
         
         return productoRepository.save(productoExistente);
+    }
+
+    // --- MÉTODOS DE APOYO PARA LÓGICA DE NEGOCIO ---
+
+    private void validarStockNoNegativo(Integer stock) {
+        if (stock == null || stock < 0) {
+            throw new IllegalArgumentException("Integridad de Datos: El stock no puede ser negativo (" + stock + ").");
+        }
+    }
+
+    private void validarLoteUnico(String lote) {
+        if (productoRepository.findByLote(lote).isPresent()) {
+            throw new RuntimeException("Error de Trazabilidad: El lote '" + lote + "' ya existe en el sistema.");
+        }
+    }
+
+    private void alertarSiVencePronto(Producto producto) {
+        if (producto.getFechaVencimiento() != null) {
+            long diasParaVencer = ChronoUnit.DAYS.between(LocalDate.now(), producto.getFechaVencimiento());
+            if (diasParaVencer <= 30 && diasParaVencer >= 0) {
+                
+                System.out.println("ALERTA SANITARIA: El producto " + producto.getNombre() + " vence en " + diasParaVencer + " días.");
+            }
+        }
     }
 
     // Ajustar Stock 
