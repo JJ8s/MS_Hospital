@@ -2,6 +2,8 @@ package hospital.ms_facturacion.service;
 
 import hospital.ms_facturacion.client.InventarioClient;
 import hospital.ms_facturacion.client.RecetaClient;
+import hospital.ms_facturacion.dto.ProductoDTO;
+import hospital.ms_facturacion.dto.RecetaDTO;
 import hospital.ms_facturacion.model.Factura;
 import hospital.ms_facturacion.repository.FacturaRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,8 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
-import java.util.HashMap;
-import java.util.Map;
+
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,29 +49,42 @@ class FacturaServiceTest {
 
     @Test
     void cuandoCrearFactura_entoncesCalculaMontoCorrectamente() {
-        // GIVEN: Preparamos los mocks
+        
         when(facturaRepository.findByRecetaId(10L)).thenReturn(Optional.empty());
         
         
-        Map<String, Object> mockReceta = new HashMap<>();
-        mockReceta.put("productoId", 5L);
-        mockReceta.put("pacienteId", 100L);
+        RecetaDTO mockReceta = new RecetaDTO();
+        mockReceta.setId(10L);
+        mockReceta.setProductoId(5L);
+        mockReceta.setPacienteId(100L);
+        
         
         when(recetaClient.obtenerPorId(10L)).thenReturn(ResponseEntity.ok(mockReceta));
 
-        Map<String, Object> mockProducto = new HashMap<>();
-        mockProducto.put("precio", 1500.0);
+        
+        ProductoDTO mockProducto = new ProductoDTO();
+        mockProducto.setId(5L);
+        mockProducto.setPrecio(1500.0);
+        
+        
         when(inventarioClient.obtenerPorId(5L)).thenReturn(ResponseEntity.ok(mockProducto));
 
+        
         when(facturaRepository.save(any(Factura.class))).thenAnswer(i -> i.getArgument(0));
 
-        // WHEN: Ejecutamos la lógica de creación
+        
         Factura resultado = facturaService.crearFactura(facturaMock);
 
-        // THEN: Verificamos cálculos
+        
         assertNotNull(resultado);
-        assertEquals(2000.0, resultado.getMontoTotal());
+        
+        assertEquals(2000.0, resultado.getMontoTotal(), "El monto total calculado es incorrecto");
+        assertEquals(100L, resultado.getPacienteId(), "El ID del paciente no se reconcilió correctamente");
         assertEquals("PENDIENTE", resultado.getEstado());
+        
+        
+        verify(recetaClient, times(1)).obtenerPorId(10L);
+        verify(inventarioClient, times(1)).obtenerPorId(5L);
         verify(facturaRepository, times(1)).save(any(Factura.class));
     }
 

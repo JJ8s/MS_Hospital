@@ -1,17 +1,16 @@
 package hospital.ms_facturacion.client;
 
-import hospital.ms_facturacion.config.FeignClientConfig;
+import hospital.ms_facturacion.dto.RecetaDTO;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.http.ResponseEntity;
-import java.util.Map;
 
 
-@FeignClient(name = "ms-recetas", configuration = FeignClientConfig.class)
+@FeignClient(name = "ms-recetas")
 public interface RecetaClient {
-
     @GetMapping("/api/recetas/{id}")
-    ResponseEntity<Map<String, Object>> obtenerPorId(@PathVariable("id") Long id);
+    ResponseEntity<RecetaDTO> obtenerPorId(@PathVariable("id") Long id);
 }
 

@@ -1,16 +1,18 @@
 package hospital.ms_facturacion.service;
 
 import hospital.ms_facturacion.client.RecetaClient;
+import hospital.ms_facturacion.dto.ProductoDTO;
+import hospital.ms_facturacion.dto.RecetaDTO;
 import hospital.ms_facturacion.client.InventarioClient; 
 import hospital.ms_facturacion.model.Factura;
 import hospital.ms_facturacion.repository.FacturaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class FacturaService {
@@ -35,41 +37,39 @@ public class FacturaService {
                 .orElseThrow(() -> new RuntimeException("Error: Factura No. " + id + " no encontrada."));
     }
 
-    @Transactional
+   @Transactional
     public Factura crearFactura(Factura factura) {
-       
+        // 1. Regla de Negocio: Validar duplicados (IE 2.2.1)
         if (facturaRepository.findByRecetaId(factura.getRecetaId()).isPresent()) {
             throw new RuntimeException("Error: Ya existe una factura emitida para la receta No. " + factura.getRecetaId());
         }
 
         try {
+            // Obtener Receta usando DTO 
+            ResponseEntity<RecetaDTO> respuestaReceta = recetaClient.obtenerPorId(factura.getRecetaId());
+            RecetaDTO receta = respuestaReceta.getBody();
             
-            Map<String, Object> receta = recetaClient.obtenerPorId(factura.getRecetaId()).getBody();
-            
-            if (receta == null) throw new RuntimeException("La receta no devolvió datos.");
+            if (receta == null) throw new RuntimeException("La receta no devolvió datos válidos.");
 
-            Long productoId = Long.valueOf(receta.get("productoId").toString());
-            Long pacienteId = Long.valueOf(receta.get("pacienteId").toString());
-
+            // Obtener Producto usando DTO 
+            ResponseEntity<ProductoDTO> respuestaProducto = inventarioClient.obtenerPorId(receta.getProductoId());
+            ProductoDTO producto = respuestaProducto.getBody();
             
-            Map<String, Object> producto = inventarioClient.obtenerPorId(productoId).getBody();
-            
-            if (producto == null) throw new RuntimeException("El producto no devolvió datos de precio.");
-            
-            Double precioProducto = Double.valueOf(producto.get("precio").toString());
+            if (producto == null) throw new RuntimeException("El producto asociado no existe o no tiene precio.");
 
             
-            factura.setPacienteId(pacienteId);
-            Double montoFinal = factura.getCostoServicio() + precioProducto;
+            factura.setPacienteId(receta.getPacienteId());
+            Double montoFinal = factura.getCostoServicio() + producto.getPrecio();
             factura.setMontoTotal(montoFinal); 
+            
             factura.setEstado("PENDIENTE");
             factura.setFechaEmision(LocalDateTime.now());
 
             return facturaRepository.save(factura);
 
         } catch (Exception e) {
-           
-            throw new RuntimeException("Fallo en Interoperabilidad: " + e.getMessage());
+            // Manejo adecuado de errores remotos
+            throw new RuntimeException("Fallo en Interoperabilidad con microservicios: " + e.getMessage());
         }
     }
 
