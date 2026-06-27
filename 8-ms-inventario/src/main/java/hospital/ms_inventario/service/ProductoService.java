@@ -1,5 +1,8 @@
 package hospital.ms_inventario.service;
 
+import hospital.ms_inventario.exception.LoteDuplicadoException;
+import hospital.ms_inventario.exception.ProductoDuplicadoException;
+import hospital.ms_inventario.exception.StockInsuficienteException;
 import hospital.ms_inventario.model.Producto;
 import hospital.ms_inventario.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,14 +27,18 @@ public class ProductoService {
     public Producto guardar(Producto producto) {
         // 1. Regla: Evitar duplicados por nombre
         if (productoRepository.existsByNombre(producto.getNombre())) {
-            throw new RuntimeException("Error de Negocio: El producto '" + producto.getNombre() + "' ya está registrado.");
+            throw new ProductoDuplicadoException("Error de Negocio: El producto '" + producto.getNombre() + "' ya está registrado.");
         }
 
-        // 2. Regla de Trazabilidad: Lote único [2]
-        validarLoteUnico(producto.getLote());
+        // 2. Regla de Trazabilidad: Lote único
+        if (productoRepository.existsByLote(producto.getLote())) {
+            throw new LoteDuplicadoException("Error de Trazabilidad: El lote '" + producto.getLote() + "' ya existe en el sistema.");
+        }
 
         // 3. Regla de Integridad: Stock inicial no negativo
-        validarStockNoNegativo(producto.getStock());
+        if (producto.getStock() < 0) {
+            throw new StockInsuficienteException("Error de Integridad: El stock inicial no puede ser negativo (" + producto.getStock() + ").");
+        }
 
         return productoRepository.save(producto);
     }

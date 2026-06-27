@@ -1,5 +1,6 @@
 package hospital.ms_inventario.service;
 
+import hospital.ms_inventario.exception.StockInsuficienteException;
 import hospital.ms_inventario.model.Producto;
 import hospital.ms_inventario.repository.ProductoRepository;
 import org.junit.jupiter.api.Test;
@@ -117,21 +118,18 @@ public class ProductoServiceTest {
 
     @Test
     void cuandoGuardarProductoConStockNegativo_entoncesLanzaExcepcion() {
-        // GIVEN
+        
         Producto productoInvalido = new Producto();
         productoInvalido.setNombre("Jarabe");
         productoInvalido.setLote("L-999"); 
         productoInvalido.setStock(-5); 
-
         
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        StockInsuficienteException exception = assertThrows(StockInsuficienteException.class, () -> {
             productoService.guardar(productoInvalido);
         });
 
-        
-        assertEquals("Integridad de Datos: El stock no puede ser negativo (-5).", exception.getMessage());
+        assertEquals("Error de Integridad: El stock inicial no puede ser negativo (-5).", exception.getMessage());
 
-        
         verify(productoRepository, never()).save(any(Producto.class));
     }
 }

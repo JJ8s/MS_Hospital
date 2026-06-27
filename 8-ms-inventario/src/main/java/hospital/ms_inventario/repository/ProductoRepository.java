@@ -20,4 +20,6 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     
     List<Producto> findByStockLessThan(Integer limite);
+
+    boolean existsByLote(String lote);
 }
