@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -23,54 +24,95 @@ public class FacturaService {
     @Autowired
     private InventarioClient inventarioClient;
 
+    @Transactional(readOnly = true)
     public List<Factura> listarTodas() {
         return facturaRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Factura obtenerPorId(Long id) {
+        return facturaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Error: Factura No. " + id + " no encontrada."));
     }
 
     @SuppressWarnings("unchecked")
     @Transactional
     public Factura crearFactura(Factura factura) {
-        
+        // 1. Regla de Negocio: Evitar facturación duplicada de una misma receta
         if (facturaRepository.findByRecetaId(factura.getRecetaId()).isPresent()) {
             throw new RuntimeException("Error: Ya existe una factura emitida para la receta No. " + factura.getRecetaId());
         }
 
         try {
-            
+            // 2. Interoperabilidad: Obtener datos de la receta y el producto (IE 2.4.1)
             Map<String, Object> receta = (Map<String, Object>) recetaClient.obtenerPorId(factura.getRecetaId());
             Long productoId = Long.valueOf(receta.get("productoId").toString());
             Long pacienteId = Long.valueOf(receta.get("pacienteId").toString());
 
-            
             Map<String, Object> producto = (Map<String, Object>) inventarioClient.obtenerPorId(productoId);
             Double precioProducto = Double.valueOf(producto.get("precio").toString());
 
-            
+            // 3. Lógica de Dominio: Cálculos y asignación de estado
             factura.setPacienteId(pacienteId);
-            
-            
             Double montoFinal = factura.getCostoServicio() + precioProducto;
             factura.setMontoTotal(montoFinal); 
-
             factura.setEstado("PENDIENTE");
+            factura.setFechaEmision(LocalDateTime.now());
 
             return facturaRepository.save(factura);
 
         } catch (Exception e) {
-            throw new RuntimeException("Error al procesar facturación: " + e.getMessage());
+            throw new RuntimeException("Fallo en Interoperabilidad: No se pudo procesar la facturación. " + e.getMessage());
         }
     }
 
     @Transactional
     public Factura pagarFactura(Long id) {
-        Factura factura = facturaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Error: Factura No. " + id + " no encontrada."));
+        Factura factura = obtenerPorId(id);
         
         if ("PAGADA".equals(factura.getEstado())) {
-            throw new RuntimeException("La factura ya se encuentra pagada.");
+            throw new RuntimeException("Validación: La factura ya se encuentra pagada.");
         }
         
         factura.setEstado("PAGADA");
         return facturaRepository.save(factura);
+    }
+
+    /**
+     * Mejora: Actualizar Factura
+     * Solo permite cambios si la factura no ha sido pagada para mantener integridad financiera.
+     */
+    @Transactional
+    public Factura actualizarFactura(Long id, Factura detalles) {
+        Factura facturaExistente = obtenerPorId(id);
+
+        if ("PAGADA".equals(facturaExistente.getEstado())) {
+            throw new RuntimeException("Seguridad: No se puede modificar una factura con estado PAGADA.");
+        }
+
+        // Regla: No se permite cambiar la receta original para evitar inconsistencias de cobro
+        facturaExistente.setCostoServicio(detalles.getCostoServicio());
+        
+        // Recalcular el monto total basándose en el nuevo costo de servicio
+        // (Se asume que el precio del producto se mantiene desde la creación original)
+        Double precioProductoOriginal = facturaExistente.getMontoTotal() - facturaExistente.getCostoServicio();
+        facturaExistente.setMontoTotal(detalles.getCostoServicio() + precioProductoOriginal);
+
+        return facturaRepository.save(facturaExistente);
+    }
+
+    /**
+     * Mejora: Eliminar Factura
+     * Regla crítica: No se pueden eliminar registros de facturas pagadas (Auditoría).
+     */
+    @Transactional
+    public void eliminarFactura(Long id) {
+        Factura factura = obtenerPorId(id);
+        
+        if ("PAGADA".equals(factura.getEstado())) {
+            throw new RuntimeException("Auditoría: Está prohibido eliminar facturas pagadas del historial financiero.");
+        }
+        
+        facturaRepository.delete(factura);
     }
 }
