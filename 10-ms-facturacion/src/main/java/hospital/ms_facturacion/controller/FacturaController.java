@@ -1,8 +1,13 @@
 package hospital.ms_facturacion.controller;
 
 import hospital.ms_facturacion.model.Factura;
-import hospital.ms_facturacion.repository.FacturaRepository;
 import hospital.ms_facturacion.service.FacturaService;
+import hospital.ms_facturacion.exception.ErrorResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,88 +15,67 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/facturas")
+@Tag(name = "Factura Controller", description = "API para la gestión de cobros y facturación hospitalaria")
 public class FacturaController {
 
     @Autowired
     private FacturaService facturaService;
 
-    @Autowired
-    private FacturaRepository facturaRepository;
-
-    // 1. Listar todas las facturas
+    @Operation(summary = "Listar facturas", description = "Obtiene el historial completo de facturas generadas en el sistema.")
+    @ApiResponse(responseCode = "200", description = "Lista recuperada exitosamente")
     @GetMapping
-    public ResponseEntity<List<Factura>> listar() {
-        return ResponseEntity.ok(facturaService.listarTodas());
+    public List<Factura> listar() {
+        return facturaService.listarTodas();
     }
 
-    // 2. Crear una nueva factura
+    @Operation(summary = "Generar nueva factura", description = "Crea un registro de cobro asociado a una receta médica.")
+    @ApiResponse(responseCode = "201", description = "Factura generada exitosamente")
+    @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", 
+                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping
-    public ResponseEntity<?> crear(@Valid @RequestBody Factura factura) {
-        try {
-            Factura nuevaFactura = facturaService.crearFactura(factura);
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Factura generada exitosamente. Pendiente de pago.");
-            respuesta.put("factura", nuevaFactura);
-            return new ResponseEntity<>(respuesta, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body("Error al generar factura: " + e.getMessage());
-        }
+    public ResponseEntity<Factura> crear(@Valid @RequestBody Factura factura) {
+        return new ResponseEntity<>(facturaService.crearFactura(factura), HttpStatus.CREATED);
     }
 
-    // 3. Pagar una factura
+    @Operation(summary = "Procesar pago de factura", description = "Cambia el estado de una factura de 'PENDIENTE' a 'PAGADA'.")
+    @ApiResponse(responseCode = "200", description = "Pago procesado con éxito")
+    @ApiResponse(responseCode = "400", description = "La factura ya está pagada", 
+                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Factura no encontrada", 
+                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping("/{id}/pagar")
-    public ResponseEntity<?> marcarComoPagada(@PathVariable Long id) {
-        return facturaRepository.findById(id).map(factura -> {
-            if ("PAGADA".equals(factura.getEstado())) {
-                return ResponseEntity.badRequest().body("La factura #" + id + " ya se encuentra pagada.");
-            }
-            factura.setEstado("PAGADA");
-            Factura facturaActualizada = facturaRepository.save(factura);
-            
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "¡Pago procesado con éxito!");
-            respuesta.put("factura", facturaActualizada);
-            return ResponseEntity.ok(respuesta);
-        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: No se encontró la factura #" + id + " para procesar el pago."));
+    public ResponseEntity<Factura> marcarComoPagada(@PathVariable Long id) {
+        return ResponseEntity.ok(facturaService.pagarFactura(id));
     }
 
-    // 4. Buscar factura por ID
+    @Operation(summary = "Obtener factura por ID", description = "Busca los detalles de cobro mediante su identificador único.")
+    @ApiResponse(responseCode = "200", description = "Factura encontrada")
+    @ApiResponse(responseCode = "404", description = "ID de factura no existe", 
+                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/{id}")
-    public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
-        return facturaRepository.findById(id)
-                .map(factura -> ResponseEntity.ok((Object) factura))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("La factura con ID " + id + " no existe."));
+    public ResponseEntity<Factura> buscarPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(facturaService.obtenerPorId(id));
     }
 
-    // 5. Actualizar factura
+    @Operation(summary = "Actualizar datos de factura", description = "Permite modificar montos o estados de una factura existente.")
+    @ApiResponse(responseCode = "200", description = "Factura actualizada correctamente")
+    @ApiResponse(responseCode = "404", description = "No se encontró la factura para actualizar", 
+                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizar(@PathVariable Long id, @Valid @RequestBody Factura facturaDetalles) {
-        return facturaRepository.findById(id).map(factura -> {
-            factura.setRecetaId(facturaDetalles.getRecetaId());
-            factura.setPacienteId(facturaDetalles.getPacienteId());
-            factura.setMontoTotal(facturaDetalles.getMontoTotal());
-            factura.setEstado(facturaDetalles.getEstado());
-            Factura actualizada = facturaRepository.save(factura);
-            
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Factura #" + id + " actualizada correctamente.");
-            respuesta.put("factura", actualizada);
-            return ResponseEntity.ok().body((Object) respuesta); 
-        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se puede actualizar: Factura #" + id + " no encontrada."));
+    public ResponseEntity<Factura> actualizar(@PathVariable Long id, @Valid @RequestBody Factura facturaDetalles) {
+        return ResponseEntity.ok(facturaService.actualizarFactura(id, facturaDetalles));
     }
 
-    // 6. Eliminar factura
+    @Operation(summary = "Eliminar factura", description = "Remueve permanentemente el registro de factura del sistema.")
+    @ApiResponse(responseCode = "204", description = "Factura eliminada correctamente")
+    @ApiResponse(responseCode = "404", description = "La factura a eliminar no existe", 
+                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> eliminar(@PathVariable Long id) {
-        return facturaRepository.findById(id).map(factura -> {
-            facturaRepository.delete(factura);
-            return ResponseEntity.ok("La factura #" + id + " ha sido eliminada del sistema.");
-        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: La factura que intenta eliminar no existe."));
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        facturaService.eliminarFactura(id);
+        return ResponseEntity.noContent().build();
     }
 }
