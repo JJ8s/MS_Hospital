@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,24 +48,26 @@ class FacturaServiceTest {
 
     @Test
     void cuandoCrearFactura_entoncesCalculaMontoCorrectamente() {
-        // GIVEN: Preparamos los mocks para simular respuestas de otros microservicios
+        // GIVEN: Preparamos los mocks
         when(facturaRepository.findByRecetaId(10L)).thenReturn(Optional.empty());
+        
         
         Map<String, Object> mockReceta = new HashMap<>();
         mockReceta.put("productoId", 5L);
         mockReceta.put("pacienteId", 100L);
-        when(recetaClient.obtenerPorId(10L)).thenReturn(mockReceta);
+        
+        when(recetaClient.obtenerPorId(10L)).thenReturn(ResponseEntity.ok(mockReceta));
 
         Map<String, Object> mockProducto = new HashMap<>();
         mockProducto.put("precio", 1500.0);
-        when(inventarioClient.obtenerPorId(5L)).thenReturn(mockProducto);
+        when(inventarioClient.obtenerPorId(5L)).thenReturn(ResponseEntity.ok(mockProducto));
 
         when(facturaRepository.save(any(Factura.class))).thenAnswer(i -> i.getArgument(0));
 
         // WHEN: Ejecutamos la lógica de creación
         Factura resultado = facturaService.crearFactura(facturaMock);
 
-        // THEN: Verificamos cálculos (500 servicio + 1500 producto = 2000 total)
+        // THEN: Verificamos cálculos
         assertNotNull(resultado);
         assertEquals(2000.0, resultado.getMontoTotal());
         assertEquals("PENDIENTE", resultado.getEstado());

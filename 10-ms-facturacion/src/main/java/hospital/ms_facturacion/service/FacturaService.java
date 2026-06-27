@@ -35,24 +35,30 @@ public class FacturaService {
                 .orElseThrow(() -> new RuntimeException("Error: Factura No. " + id + " no encontrada."));
     }
 
-    @SuppressWarnings("unchecked")
     @Transactional
     public Factura crearFactura(Factura factura) {
-        // 1. Regla de Negocio: Evitar facturación duplicada de una misma receta
+       
         if (facturaRepository.findByRecetaId(factura.getRecetaId()).isPresent()) {
             throw new RuntimeException("Error: Ya existe una factura emitida para la receta No. " + factura.getRecetaId());
         }
 
         try {
-            // 2. Interoperabilidad: Obtener datos de la receta y el producto (IE 2.4.1)
-            Map<String, Object> receta = (Map<String, Object>) recetaClient.obtenerPorId(factura.getRecetaId());
+            
+            Map<String, Object> receta = recetaClient.obtenerPorId(factura.getRecetaId()).getBody();
+            
+            if (receta == null) throw new RuntimeException("La receta no devolvió datos.");
+
             Long productoId = Long.valueOf(receta.get("productoId").toString());
             Long pacienteId = Long.valueOf(receta.get("pacienteId").toString());
 
-            Map<String, Object> producto = (Map<String, Object>) inventarioClient.obtenerPorId(productoId);
+            
+            Map<String, Object> producto = inventarioClient.obtenerPorId(productoId).getBody();
+            
+            if (producto == null) throw new RuntimeException("El producto no devolvió datos de precio.");
+            
             Double precioProducto = Double.valueOf(producto.get("precio").toString());
 
-            // 3. Lógica de Dominio: Cálculos y asignación de estado
+            
             factura.setPacienteId(pacienteId);
             Double montoFinal = factura.getCostoServicio() + precioProducto;
             factura.setMontoTotal(montoFinal); 
@@ -62,7 +68,8 @@ public class FacturaService {
             return facturaRepository.save(factura);
 
         } catch (Exception e) {
-            throw new RuntimeException("Fallo en Interoperabilidad: No se pudo procesar la facturación. " + e.getMessage());
+           
+            throw new RuntimeException("Fallo en Interoperabilidad: " + e.getMessage());
         }
     }
 
@@ -78,10 +85,7 @@ public class FacturaService {
         return facturaRepository.save(factura);
     }
 
-    /**
-     * Mejora: Actualizar Factura
-     * Solo permite cambios si la factura no ha sido pagada para mantener integridad financiera.
-     */
+    
     @Transactional
     public Factura actualizarFactura(Long id, Factura detalles) {
         Factura facturaExistente = obtenerPorId(id);
@@ -90,7 +94,7 @@ public class FacturaService {
             throw new RuntimeException("Seguridad: No se puede modificar una factura con estado PAGADA.");
         }
 
-        // Regla: No se permite cambiar la receta original para evitar inconsistencias de cobro
+        // No se permite cambiar la receta original para evitar inconsistencias de cobro
         facturaExistente.setCostoServicio(detalles.getCostoServicio());
         
         // Recalcular el monto total basándose en el nuevo costo de servicio
@@ -101,10 +105,7 @@ public class FacturaService {
         return facturaRepository.save(facturaExistente);
     }
 
-    /**
-     * Mejora: Eliminar Factura
-     * Regla crítica: No se pueden eliminar registros de facturas pagadas (Auditoría).
-     */
+    
     @Transactional
     public void eliminarFactura(Long id) {
         Factura factura = obtenerPorId(id);
