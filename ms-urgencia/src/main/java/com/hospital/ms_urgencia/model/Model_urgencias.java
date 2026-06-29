@@ -18,7 +18,7 @@ public class Model_urgencias {
     @NotNull(message ="El id del paciente es obligatorio")
     private Long pacienteId;
 
-    @NotBlank(message= "El nivel de triage es obligatorio")
+    @NotNull(message = "El nivel de triage es obligatorio")
     @Enumerated(EnumType.STRING)
     private NivelTriage nivelTriage;
 
