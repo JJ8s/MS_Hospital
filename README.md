@@ -1,64 +1,327 @@
 # Sistema de Gestión Hospitalaria - Arquitectura de Microservicios
 
-Este rama del repositorio contiene la solución backend para la gestión hospitalaria basada en una arquitectura de microservicios utilizando **Spring Boot**, **Spring Cloud** y **Java 17**. El sistema automatiza el flujo clínico desde la emisión de recetas médicas hasta el control de stock en farmacia y la generación automática de facturas.
+## Descripción
 
-## 👥 Integrantes
-* **Matias Currin** - Desarrollador Backend (Microservicios de Inventario, Recetas y Facturación)
+Este repositorio contiene el desarrollo del backend de un **Sistema de Gestión Hospitalaria** construido bajo una arquitectura de microservicios utilizando **Spring Boot**, **Spring Cloud** y **Java 17**.
 
----
+El objetivo del proyecto es distribuir las responsabilidades del sistema en servicios independientes que puedan comunicarse entre sí mediante REST, facilitando el mantenimiento, escalabilidad y reutilización de los distintos módulos del sistema.
 
-## 🏗️ Arquitectura del Sistema
-
-El ecosistema está diseñado bajo un patrón de microservicios descentralizados, comunicados de forma síncrona y registrados en un servidor de descubrimiento.
-
-### Componentes de Infraestructura:
-* **Eureka Server (Puerto 8761):** Servidor de descubrimiento que centraliza el registro de todos los microservicios activos.
-* **API Gateway (Puerto 8080):** Puerta de entrada única del sistema que enruta las peticiones HTTP externas hacia los microservicios correspondientes de manera segura.
-
-### Microservicios de Negocio:
-1. **ms-inventario:** Se encarga del ciclo de vida de los productos e insumos médicos (CRUD, control de stock físico, alertas de vencimiento y lote).
-2. **ms-recetas:** Permite la emisión de recetas médicas asociadas a un paciente y a un doctor responsable. Coordina la validación de insumos con el inventario.
-3. **ms-facturacion:** Gestiona los cobros del hospital, calculando dinámicamente los montos totales sumando el costo del servicio médico y el precio de los medicamentos entregados.
+El flujo principal implementado permite registrar productos médicos, generar recetas y emitir facturas considerando tanto el costo del servicio médico como el valor de los medicamentos utilizados.
 
 ---
 
-## 🛠️ Decisiones de Diseño Técnico
+# Autor
 
-* **Comunicación Síncrona (Feign Client):** Se utiliza Declarative REST Clients para conectar `ms-recetas` con `ms-inventario`, y `ms-facturacion` con los servicios base, logrando un flujo de datos inmediato y consistente.
-* **Transaccionalidad Segura (`@Transactional`):** Para mitigar la inconsistencia eventual entre bases de datos, las operaciones críticas primero aseguran la persistencia local antes de gatillar peticiones externas.
-* **Lógica de Compensación:** Si una receta es eliminada, el sistema dispara automáticamente un evento `PUT` hacia el inventario para reponer las unidades y evitar mermas fantasma en el stock digital.
-* **Modelo de Dominio Compartido:** En esta fase de MVP se priorizó un modelo de dominio directo para acelerar el desarrollo y mantener un acoplamiento controlado, resguardando la entrada de datos con **Bean Validation** (`@NotNull`, `@Min`).
+**Matías Currin**
+
+Desarrollador Backend
+
+Microservicios desarrollados:
+
+* ms-inventario
+* ms-recetas
+* ms-facturación
 
 ---
 
-## 🚀 Guía de Pruebas en Postman (Flujo Integrado)
+# Arquitectura General
 
-Para comprobar el funcionamiento real del sistema a través del API Gateway, ejecute las siguientes peticiones HTTP en el orden indicado:
+El sistema fue diseñado siguiendo una arquitectura distribuida basada en microservicios.
 
-### 1. Registrar Producto Inicial (`ms-inventario`)
-* **Método:** `POST`
-* **Endpoint:** `http://localhost:8080/api/productos`
-* **JSON de entrada:**
-```json
-{
-    "nombre": "Amoxicilina 500mg",
-    "descripcion": "Antibiótico de amplio espectro",
-    "precio": 12500.0,
-    "stock": 50,
-    "lote": "L-2026-X",
-    "fechaVencimiento": "2026-12-20"
-}
+Cada microservicio posee:
 
-{
-    "pacienteId": 101,
-    "productoId": 2,
-    "cantidad": 2,
-    "doctorResponsable": "Dr. Cristiano Ronaldo",
-    "indicaciones": "Tomar 1 comprimido cada 8 horas por 5 días."
-}
+* Responsabilidad única.
+* Base de código independiente.
+* Configuración propia.
+* Registro automático en Eureka.
+* Comunicación mediante REST.
 
-{
-    "pacienteId": 101,
-    "recetaId": 2,
-    "costoServicio": 3500.0
-}
+Arquitectura general:
+
+```
+Cliente
+
+      │
+
+API Gateway
+
+      │
+
+Eureka Server
+
+      │
+
+───────────────────────────────
+
+ms-inventario
+
+ms-recetas
+
+ms-facturación
+```
+
+Esta estructura permite desacoplar los servicios y simplificar futuras ampliaciones del sistema.
+
+---
+
+# Componentes de Infraestructura
+
+## Eureka Server
+
+Puerto: **8761**
+
+Responsable del descubrimiento de servicios.
+
+Funciones principales:
+
+* Registrar automáticamente cada microservicio.
+* Permitir que los servicios se encuentren dinámicamente.
+* Evitar el uso de direcciones IP o puertos fijos durante la comunicación.
+
+---
+
+## API Gateway
+
+Puerto: **8080**
+
+Representa el único punto de entrada al sistema.
+
+Su función es:
+
+* Centralizar las solicitudes HTTP.
+* Redireccionar las peticiones al microservicio correspondiente.
+* Simplificar el acceso desde el cliente.
+* Mantener ocultos los puertos internos de cada servicio.
+
+Ejemplo:
+
+```
+Cliente
+
+↓
+
+localhost:8080/api/...
+
+↓
+
+Gateway
+
+↓
+
+Microservicio correspondiente
+```
+
+---
+
+# Microservicios
+
+## ms-inventario
+
+Responsable de administrar todos los medicamentos e insumos médicos.
+
+Funciones principales
+
+* Registrar productos.
+* Consultar inventario.
+* Actualizar información.
+* Controlar stock.
+* Eliminar registros.
+* Validar disponibilidad de medicamentos.
+
+Este servicio representa la fuente oficial del stock disponible dentro del sistema.
+
+---
+
+## ms-recetas
+
+Gestiona las recetas médicas emitidas por los profesionales.
+
+Responsabilidades
+
+* Registrar recetas.
+* Asociar paciente y médico.
+* Validar información.
+* Consultar recetas.
+* Consumir información del inventario cuando es necesario.
+
+Este servicio concentra únicamente la lógica relacionada con las recetas médicas.
+
+---
+
+## ms-facturación
+
+Administra el proceso de facturación del hospital.
+
+Funciones
+
+* Registrar facturas.
+* Calcular costo total.
+* Obtener información desde otros servicios.
+* Consolidar valores médicos y medicamentos.
+
+La lógica de cálculo se mantiene completamente aislada del resto de microservicios.
+
+---
+
+# Comunicación entre Microservicios
+
+La interoperabilidad del sistema se realiza mediante comunicación REST utilizando **Feign Client**.
+
+Flujo implementado:
+
+```
+Facturación
+
+↓
+
+Recetas
+
+↓
+
+Inventario
+```
+
+Esta comunicación permite que cada microservicio mantenga su propia responsabilidad sin acceder directamente a la base de datos de otro servicio.
+
+Cada servicio expone únicamente los endpoints necesarios para compartir información.
+
+---
+
+# Patrón de Desarrollo
+
+Todos los microservicios siguen el patrón:
+
+**Controller → Service → Repository**
+
+### Controller
+
+* Recibe solicitudes HTTP.
+* Devuelve respuestas HTTP.
+* No contiene lógica de negocio.
+
+### Service
+
+* Implementa las reglas del negocio.
+* Realiza validaciones.
+* Gestiona la comunicación con otros servicios.
+* Controla excepciones.
+
+### Repository
+
+* Acceso a datos mediante Spring Data JPA.
+* Operaciones CRUD.
+* Sin lógica de negocio.
+
+### Model
+
+Representa las entidades persistentes del sistema.
+
+Esta separación permite mantener un código desacoplado y facilita las pruebas unitarias.
+
+---
+
+# Configuración
+
+Cada microservicio posee su propio archivo **application.yml**.
+
+Entre las propiedades configuradas se encuentran:
+
+* server.port
+* spring.application.name
+* datasource
+* spring.jpa
+* eureka.client
+* logging
+
+La configuración externa permite modificar el comportamiento de la aplicación sin alterar el código fuente.
+
+---
+
+# Documentación
+
+Todos los microservicios incorporan documentación mediante **Swagger / OpenAPI**.
+
+La documentación permite visualizar:
+
+* Endpoints.
+* Parámetros.
+* Request Body.
+* Response Body.
+* Modelos.
+* Códigos HTTP.
+
+Esto facilita las pruebas y la integración entre servicios.
+
+---
+
+# Pruebas Unitarias
+
+Las pruebas fueron implementadas utilizando:
+
+* JUnit 5
+* Mockito
+
+Las pruebas se concentran principalmente sobre la capa Service para validar la lógica del negocio sin depender de la base de datos.
+
+Se utilizan mocks para simular repositorios y dependencias externas.
+
+---
+
+# Flujo General del Sistema
+
+1. Se registra un medicamento en Inventario.
+2. Se crea una receta médica asociando paciente y medicamento.
+3. El sistema valida la información correspondiente.
+4. Se genera la factura considerando el costo del servicio médico y los medicamentos.
+5. La respuesta es enviada al cliente mediante el API Gateway.
+
+---
+
+# Guía rápida de ejecución
+
+Orden recomendado:
+
+1. Levantar Eureka Server.
+2. Levantar API Gateway.
+3. Ejecutar ms-inventario.
+4. Ejecutar ms-recetas.
+5. Ejecutar ms-facturación.
+6. Verificar el registro de todos los servicios en Eureka.
+7. Probar los endpoints desde Swagger o Postman.
+
+---
+
+# Tecnologías utilizadas
+
+* Java 17
+* Spring Boot
+* Spring Web
+* Spring Data JPA
+* Spring Cloud Gateway
+* Spring Cloud OpenFeign
+* Eureka Server
+* Swagger / OpenAPI
+* JUnit 5
+* Mockito
+* Maven
+
+---
+
+# Consideraciones de Diseño
+
+Durante el desarrollo se buscó mantener una arquitectura desacoplada, escalable y fácil de mantener.
+
+Las principales decisiones técnicas fueron:
+
+* Aplicación del patrón Controller-Service-Repository.
+* Separación de responsabilidades mediante microservicios.
+* Descubrimiento automático utilizando Eureka.
+* Centralización del acceso mediante API Gateway.
+* Comunicación REST entre servicios utilizando Feign Client.
+* Configuración desacoplada mediante archivos YAML.
+* Documentación automática con Swagger.
+* Validaciones concentradas en la capa Service.
+* Pruebas unitarias sobre la lógica de negocio utilizando JUnit y Mockito.
+* Persistencia implementada mediante Spring Data JPA.
+
+Este diseño permite que cada componente evolucione de manera independiente, reduciendo el acoplamiento entre módulos y facilitando futuras ampliaciones del sistema.
