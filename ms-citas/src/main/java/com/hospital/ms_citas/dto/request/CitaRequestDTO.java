@@ -1,20 +1,19 @@
-package com.hospital.ms_citas.model;
+package com.hospital.ms_citas.dto.request;
+
+import com.hospital.ms_citas.model.EstadoCita;
+import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotNull;
-import lombok.Data;
 
-@Entity
-@Table(name = "citas")
 @Data
-public class Model_citas {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@NoArgsConstructor
+@AllArgsConstructor
+public class CitaRequestDTO {
 
     @NotNull(message = "El ID del paciente es obligatorio")
     private Long pacienteId;
@@ -30,7 +29,6 @@ public class Model_citas {
     private LocalTime hora;
 
     @NotNull(message = "El estado es obligatorio")
-    @Enumerated(EnumType.STRING)
     private EstadoCita estado;
 
     private String observaciones;
