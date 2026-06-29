@@ -1,0 +1,14 @@
+hospital\ms_user\MsUserApplication.class
+hospital\ms_user\mapper\UserMapperImpl.class
+hospital\ms_user\exception\BadRequestException.class
+hospital\ms_user\model\User.class
+hospital\ms_user\mapper\UserMapper.class
+hospital\ms_user\service\UserService.class
+hospital\ms_user\dto\UserResponseDTO.class
+hospital\ms_user\config\SwaggerConfig.class
+hospital\ms_user\controller\UserController.class
+hospital\ms_user\exception\GlobalExceptionHandler.class
+hospital\ms_user\repository\UserRepository.class
+hospital\ms_user\dto\UserCreateDTO.class
+hospital\ms_user\model\Rol.class
+hospital\ms_user\exception\ErrorResponse.class
