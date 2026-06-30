@@ -14,17 +14,10 @@ import java.time.LocalTime;
 public class CitaResponseDTO {
 
     private Long id;
-
     private Long pacienteId;
-
     private Long medicoId;
-
     private LocalDate fecha;
-
     private LocalTime hora;
-
     private EstadoCita estado;
-
     private String observaciones;
-
 }

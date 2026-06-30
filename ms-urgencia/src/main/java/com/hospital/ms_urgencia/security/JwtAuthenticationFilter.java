@@ -21,11 +21,12 @@ import java.util.stream.Collectors;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String SECRET = "clave-secreta-compartida-256-bits-que-debe-ser-igual-en-ms-auth";
+    private static final String SECRET = "12345678901234567890123456789012";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+
         String header = request.getHeader("Authorization");
 
         if (header != null && header.startsWith("Bearer ")) {
@@ -43,24 +44,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 Object rolesObject = claims.get("roles");
                 List<String> roles = new ArrayList<>();
-                if (rolesObject instanceof List) {
-                    roles = (List<String>) rolesObject;
-                } else if (rolesObject instanceof String) {
-                    roles.add((String) rolesObject);
+
+                if (rolesObject instanceof List<?>) {
+                    roles = ((List<?>) rolesObject).stream()
+                            .map(Object::toString)
+                            .toList();
+                } else if (rolesObject instanceof String role) {
+                    roles.add(role);
                 }
 
-                // Normaliza a "ROLE_X": hasRole()/hasAnyRole() en SecurityConfig
-                // requieren ese prefijo internamente para que el match funcione.
                 List<SimpleGrantedAuthority> authorities = roles.stream()
                         .map(rol -> {
-                            rol = rol.trim();
-                            if (!rol.startsWith("ROLE_")) rol = "ROLE_" + rol;
-                            return new SimpleGrantedAuthority(rol);
+                            String rolNormalizado = rol.trim();
+                            if (!rolNormalizado.startsWith("ROLE_")) {
+                                rolNormalizado = "ROLE_" + rolNormalizado;
+                            }
+                            return new SimpleGrantedAuthority(rolNormalizado);
                         })
                         .collect(Collectors.toList());
 
                 SecurityContextHolder.getContext().setAuthentication(
-                        new UsernamePasswordAuthenticationToken(username, null, authorities));
+                        new UsernamePasswordAuthenticationToken(username, null, authorities)
+                );
 
             } catch (Exception e) {
                 SecurityContextHolder.clearContext();

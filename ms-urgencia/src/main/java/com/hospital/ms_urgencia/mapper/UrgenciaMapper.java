@@ -9,14 +9,23 @@ import org.springframework.stereotype.Component;
 public class UrgenciaMapper {
 
     public Model_urgencias toEntity(UrgenciaRequestDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+
         Model_urgencias urgencia = new Model_urgencias();
         urgencia.setPacienteId(dto.getPacienteId());
         urgencia.setNivelTriage(dto.getNivelTriage());
         urgencia.setMotivoIngreso(dto.getMotivoIngreso());
-       return urgencia;
+        urgencia.setEstadoActual("EN_ESPERA");
+        return urgencia;
     }
 
     public UrgenciaResponseDTO toResponse(Model_urgencias urgencia) {
+        if (urgencia == null) {
+            return null;
+        }
+
         return new UrgenciaResponseDTO(
                 urgencia.getId(),
                 urgencia.getPacienteId(),

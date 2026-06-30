@@ -13,14 +13,9 @@ import java.time.LocalDateTime;
 public class UrgenciaResponseDTO {
 
     private Long id;
-
     private Long pacienteId;
-
     private NivelTriage nivelTriage;
-
     private String motivoIngreso;
-
     private LocalDateTime fechaIngreso;
-
     private String estadoActual;
 }

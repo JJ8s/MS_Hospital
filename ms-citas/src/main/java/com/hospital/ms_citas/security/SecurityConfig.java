@@ -6,6 +6,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -23,19 +24,38 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml",
-                        "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/citas", "/api/citas/**").hasAnyRole("ADMIN", "MEDICO", "PACIENTE")
-                .requestMatchers(HttpMethod.POST, "/api/citas", "/api/citas/**").hasAnyRole("ADMIN", "MEDICO")
-                .requestMatchers(HttpMethod.PUT, "/api/citas", "/api/citas/**").hasAnyRole("ADMIN", "MEDICO")
-                .requestMatchers(HttpMethod.PATCH, "/api/citas", "/api/citas/**").hasAnyRole("ADMIN", "MEDICO")
-                .requestMatchers(HttpMethod.DELETE, "/api/citas", "/api/citas/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml"
+                        ).permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/citas", "/api/citas/**")
+                        .hasAnyRole("ADMIN", "MEDICO", "PACIENTE")
+
+                        .requestMatchers(HttpMethod.POST, "/api/citas", "/api/citas/**")
+                        .hasAnyRole("ADMIN", "MEDICO")
+
+                        .requestMatchers(HttpMethod.PUT, "/api/citas", "/api/citas/**")
+                        .hasAnyRole("ADMIN", "MEDICO")
+
+                        .requestMatchers(HttpMethod.PATCH, "/api/citas", "/api/citas/**")
+                        .hasAnyRole("ADMIN", "MEDICO")
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/citas", "/api/citas/**")
+                        .hasRole("ADMIN")
+
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }
