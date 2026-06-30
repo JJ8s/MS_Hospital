@@ -20,33 +20,21 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter{
-    // 1. CLAVE COMPARTIDA CON MS-AUTH: Debe medir mínimo 32 caracteres (256 bits)
     private static final String SECRET = "12345678901234567890123456789012";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
-        
-        // 2. ESTÁNDAR HTTP: Cambiado de "Autorizado" al encabezado global "Authorization"
-        String header = request.getHeader("Authorization");
-        
-        // 3. ESPACIO EN BEARER: Aseguramos el espacio reglamentario después de 'Bearer'
+            throws ServletException, IOException {        String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             try {
                 String token = header.substring(7);
                 SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
-                
                 Claims claims = Jwts.parser()
                         .verifyWith(key)
                         .build()
                         .parseSignedClaims(token)
                         .getPayload();
-                
                 String username = claims.getSubject();
-                
-                // --- INICIO DEL NUEVO BLOQUE FLEXIBLE (SECCIONES 4 Y 5) ---
-                
-                // 4. LECTURA FLEXIBLE: Soporta Listas o Strings simples sin romperse si ms-auth cambia el formato
                 Object rolesObject = claims.get("roles");
                 List<String> roles = new ArrayList<>();
 
@@ -55,8 +43,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
                 } else if (rolesObject instanceof String) {
                     roles.add((String) rolesObject);
                 }
-                
-                // 5. NORMALIZACIÓN DE ROLES: Aseguramos el prefijo "ROLE_" que exige hasAnyRole() limpiando espacios en blanco
                 List<SimpleGrantedAuthority> authorities = roles.stream()
                         .map(rol -> {
                             rol = rol.trim(); 
@@ -66,22 +52,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
                             return new SimpleGrantedAuthority(rol);
                         })
                         .collect(Collectors.toList());
-                
-                // --- FIN DEL BLOQUE FLEXIBLE ---
-                
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(username, null, authorities);
-                
-                // Autorizamos la petición en el contexto de Spring Security
+
                 SecurityContextHolder.getContext().setAuthentication(auth);
                 
             } catch (Exception e) {
-                // Si el token expira o la firma es inválida, limpiamos el contexto por seguridad
+
                 SecurityContextHolder.clearContext();
             }
         }
-        
-        // Continuar con el siguiente filtro en la cadena de Spring Security
         chain.doFilter(request, response);
     }
 }

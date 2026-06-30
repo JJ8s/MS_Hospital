@@ -19,13 +19,12 @@ public class Service_medicos {
 
     private final Repository_medicos repository_medicos;
     private final MedicoMapper mapper;
-
+    
     public Service_medicos(Repository_medicos repository_medicos,
                         MedicoMapper mapper) {
         this.repository_medicos = repository_medicos;
         this.mapper = mapper;
     }
-
     /*Obtener todos*/
     public List<MedicoResponseDTO> obtenerTodos() {
         return repository_medicos.findAll()
@@ -33,56 +32,43 @@ public class Service_medicos {
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
-
     /*Obtener por ID*/
     public MedicoResponseDTO obtenerPorId(Long id) {
-
         Model_medicos medico = repository_medicos.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Medico no encontrado con ID " + id));
-
         return mapper.toResponse(medico);
     }
-
     /*Guardar*/
     public MedicoResponseDTO guardar(MedicoRequestDTO dto) {
 
         if (repository_medicos.findByRut(dto.getRut()).isPresent()) {
             throw new DuplicadoException("Ya existe un medico con este RUT " + dto.getRut());
         }
-
         Model_medicos medico = mapper.toEntity(dto);
-
         Model_medicos guardado = repository_medicos.save(medico);
-
         return mapper.toResponse(guardado);
     }
-
     /*Buscar por RUT*/
     public MedicoResponseDTO obtenerPorRut(String rut) {
 
         Model_medicos medico = repository_medicos.findByRut(rut)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Medico no encontrado con Rut " + rut));
-
         return mapper.toResponse(medico);
     }
-
     /*Buscar por especialidad*/
     public List<MedicoResponseDTO> obtenerPorEspecialidad(String especialidad) {
 
         List<Model_medicos> medicos = repository_medicos.findByEspecialidad(especialidad);
-
         if (medicos.isEmpty()) {
             throw new ResourceNotFoundException(
                     "No se encontraron medicos con la especialidad " + especialidad);
         }
-
         return medicos.stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
-
     /*Actualizar*/
     public MedicoResponseDTO actualizar(Long id, MedicoRequestDTO dto) {
 
@@ -102,7 +88,6 @@ public class Service_medicos {
 
         return mapper.toResponse(actualizado);
     }
-
     /* Eliminar */
     public void eliminar(Long id) {
 
