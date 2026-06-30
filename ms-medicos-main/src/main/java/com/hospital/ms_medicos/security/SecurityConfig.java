@@ -21,9 +21,16 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         http.csrf(csrf->csrf.disable())
             .sessionManagement(sess->sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth->auth
-                .requestMatchers("v3/api-docs/**","/swagger-ui/**","/swagger-ui.html").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/medicos/**").hasAnyRole("ADMIN","MEDICO")
+            .authorizeHttpRequests(auth -> auth
+
+                .requestMatchers(
+                    "/v3/api-docs",
+                    "/v3/api-docs/**",
+                    "/v3/api-docs.yaml",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html"
+                ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/medicos/**").hasAnyRole("ADMIN", "MEDICO")
                 .requestMatchers(HttpMethod.POST, "/api/medicos/**").hasAnyRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/medicos/**").hasAnyRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/medicos/**").hasAnyRole("ADMIN")

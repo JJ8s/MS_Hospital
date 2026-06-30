@@ -15,39 +15,63 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String SECRET = "clave-secreta-compartida-256-bits-que-debe-ser-igual-en-ms-auth";
+    private static final String SECRET = "12345678901234567890123456789012";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+
         String header = request.getHeader("Authorization");
+
         if (header != null && header.startsWith("Bearer ")) {
             try {
                 String token = header.substring(7);
                 SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+
                 Claims claims = Jwts.parser()
                         .verifyWith(key)
                         .build()
                         .parseSignedClaims(token)
                         .getPayload();
+
                 String username = claims.getSubject();
-                @SuppressWarnings("unchecked")
-                List<String> roles = claims.get("roles", List.class);
+
+                Object rolesObject = claims.get("roles");
+                List<String> roles = new ArrayList<>();
+
+                if (rolesObject instanceof List<?>) {
+                    roles = ((List<?>) rolesObject).stream()
+                            .map(Object::toString)
+                            .toList();
+                } else if (rolesObject instanceof String role) {
+                    roles.add(role);
+                }
+
                 List<SimpleGrantedAuthority> authorities = roles.stream()
-                        .map(SimpleGrantedAuthority::new)
+                        .map(rol -> {
+                            String rolNormalizado = rol.trim();
+                            if (!rolNormalizado.startsWith("ROLE_")) {
+                                rolNormalizado = "ROLE_" + rolNormalizado;
+                            }
+                            return new SimpleGrantedAuthority(rolNormalizado);
+                        })
                         .collect(Collectors.toList());
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(username, null, authorities);
-                SecurityContextHolder.getContext().setAuthentication(auth);
+
+                SecurityContextHolder.getContext().setAuthentication(
+                        new UsernamePasswordAuthenticationToken(username, null, authorities)
+                );
+
             } catch (Exception e) {
-                // Token inválido
+                SecurityContextHolder.clearContext();
             }
         }
+
         chain.doFilter(request, response);
     }
 }

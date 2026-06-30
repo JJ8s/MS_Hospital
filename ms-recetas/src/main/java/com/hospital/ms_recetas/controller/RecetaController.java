@@ -1,93 +1,107 @@
 package com.hospital.ms_recetas.controller;
 
-import com.hospital.ms_recetas.model.Receta;
+import com.hospital.ms_recetas.dto.request.RecetaRequestDTO;
+import com.hospital.ms_recetas.dto.request.RecetaUpdateDTO;
+import com.hospital.ms_recetas.dto.response.RecetaResponseDTO;
+import com.hospital.ms_recetas.exception.ErrorResponse;
 import com.hospital.ms_recetas.service.RecetaService;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/recetas")
+@RequiredArgsConstructor
+@Tag(name = "Recetas", description = "Operaciones relacionadas con recetas medicas y prescripciones")
+@SecurityRequirement(name = "bearerAuth")
 public class RecetaController {
 
-    @Autowired
-    private RecetaService recetaService;
+    private final RecetaService recetaService;
 
-    // 1. Listar todas las recetas 
+    @Operation(summary = "Listar recetas", description = "Retorna el historial completo de recetas emitidas.")
+    @ApiResponse(responseCode = "200", description = "Recetas recuperadas correctamente")
     @GetMapping
-    public ResponseEntity<List<Receta>> listar() {
+    public ResponseEntity<List<RecetaResponseDTO>> listar() {
         return ResponseEntity.ok(recetaService.listarTodas());
     }
 
-    // 2. Crear una receta nueva 
+    @Operation(summary = "Emitir receta", description = "Registra una receta y descuenta stock desde ms-inventario.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Receta emitida correctamente"),
+            @ApiResponse(responseCode = "400", description = "Datos invalidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "502", description = "Error al comunicar con inventario",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping
-    public ResponseEntity<?> crear(@Valid @RequestBody Receta receta) {
-        try {
-            Receta nuevaReceta = recetaService.guardar(receta);
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "¡Receta emitida con éxito! Stock actualizado en inventario.");
-            respuesta.put("receta", nuevaReceta);
-            return new ResponseEntity<>(respuesta, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body("Error al emitir receta: " + e.getMessage());
-        }
+    public ResponseEntity<RecetaResponseDTO> crear(@Valid @RequestBody RecetaRequestDTO request) {
+        return new ResponseEntity<>(recetaService.guardar(request), HttpStatus.CREATED);
     }
 
-    // 3. Buscar receta por ID
+    @Operation(summary = "Buscar receta por ID", description = "Obtiene una receta mediante su identificador.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Receta encontrada"),
+            @ApiResponse(responseCode = "404", description = "Receta no encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerPorId(@PathVariable Long id) {
-        try {
-            Receta receta = recetaService.obtenerPorId(id);
-            return ResponseEntity.ok(receta);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("Error: No se encontró la receta #" + id);
-        }
+    public ResponseEntity<RecetaResponseDTO> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(recetaService.obtenerPorId(id));
     }
 
-    // 4. Buscar todas las recetas de un Paciente 
+    @Operation(summary = "Listar recetas por paciente", description = "Retorna las recetas asociadas a un paciente.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Recetas del paciente recuperadas correctamente"),
+            @ApiResponse(responseCode = "404", description = "Paciente sin recetas registradas",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/paciente/{pacienteId}")
-    public ResponseEntity<?> listarPorPaciente(@PathVariable Long pacienteId) {
-        List<Receta> recetas = recetaService.obtenerPorPaciente(pacienteId);
-        if (recetas.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("El paciente #" + pacienteId + " no tiene recetas registradas.");
-        }
-        return ResponseEntity.ok(recetas);
+    public ResponseEntity<List<RecetaResponseDTO>> listarPorPaciente(@PathVariable Long pacienteId) {
+        return ResponseEntity.ok(recetaService.obtenerPorPaciente(pacienteId));
     }
 
-    // 5. Eliminar o anular receta 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> eliminar(@PathVariable Long id) {
-        try {
-            recetaService.eliminar(id);
-            return ResponseEntity.ok("La receta #" + id + " ha sido anulada correctamente.");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("No se pudo eliminar: " + e.getMessage());
-        }
-    }
-
-    // 6. Actualizar indicaciones de la receta
+    @Operation(summary = "Actualizar indicaciones", description = "Actualiza indicaciones y doctor responsable de una receta.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Receta actualizada correctamente"),
+            @ApiResponse(responseCode = "404", description = "Receta no encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizar(@PathVariable Long id, @Valid @RequestBody Receta recetaDetalles) {
-        try {
-            Receta recetaActualizada = recetaService.actualizarIndicaciones(id, recetaDetalles);
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Indicaciones actualizadas correctamente.");
-            respuesta.put("receta", recetaActualizada);
-            return ResponseEntity.ok(respuesta);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("Error al actualizar: " + e.getMessage());
-        }
+    public ResponseEntity<RecetaResponseDTO> actualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody RecetaUpdateDTO request) {
+        return ResponseEntity.ok(recetaService.actualizarIndicaciones(id, request));
+    }
+
+    @Operation(summary = "Anular receta", description = "Elimina una receta y repone stock en ms-inventario.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Receta anulada correctamente"),
+            @ApiResponse(responseCode = "404", description = "Receta no encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "502", description = "Error al comunicar con inventario",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        recetaService.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }

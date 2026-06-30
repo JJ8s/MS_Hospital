@@ -3,6 +3,7 @@ package com.hospital.ms_citas.model;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -12,33 +13,43 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name="citas")
+@Table(name = "citas")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Model_citas {
+
     @Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull(message = "El id del paciente es obligatorio")
+    @NotNull(message = "El ID del paciente es obligatorio")
+    @Column(nullable = false)
     private Long pacienteId;
 
-    @NotNull(message = "El id del medico es obligatorio")
+    @NotNull(message = "El ID del médico es obligatorio")
+    @Column(nullable = false)
     private Long medicoId;
-    
-    @NotNull(message = "la fecha no puede estar vacia")
-    @FutureOrPresent(message = "la fecha debe ser hoy o en el futuro")
+
+    @NotNull(message = "La fecha no puede estar vacía")
+    @FutureOrPresent(message = "La fecha debe ser hoy o en el futuro")
+    @Column(nullable = false)
     private LocalDate fecha;
 
-    @NotNull(message = "la hora es obligatoria")
+    @NotNull(message = "La hora es obligatoria")
+    @Column(nullable = false)
     private LocalTime hora;
 
-    @NotNull(message = "EL estado es obligatorio")
+    @NotNull(message = "El estado es obligatorio")
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private EstadoCita estado;
-        
-    private String observaciones;
 
+    @Column(length = 500)
+    private String observaciones;
 }
