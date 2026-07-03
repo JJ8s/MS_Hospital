@@ -1,0 +1,32 @@
+server:
+  port: 8081 # <-- Tu puerto correcto para ms-user
+
+spring:
+  application:
+    name: ms-user
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_user?createDatabaseIfNotExist=true&serverTimezone=UTC
+    username: root
+    password: 
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update # Mantiene las tablas en XAMPP sin borrarlas
+    show-sql: true
+    defer-datasource-initialization: true 
+  sql:
+    init:
+      mode: always
+
+# 🛠️ AGREGAR ESTA CONFIGURACIÓN DE SWAGGER AQUÍ:
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
