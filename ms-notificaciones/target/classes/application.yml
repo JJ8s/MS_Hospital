@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: ms-notificaciones
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_notificaciones?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
+    username: root
+    password: ""
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.MySQLDialect
+
+server:
+  port: 8089
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+# Secreto para firmar tokens JWT en desarrollo local
+jwt:
+  secret: "ClaveSecretaSuperSeguraParaElHospital2026Base!"
+
+---
+# ===================================================================
+#  CONFIGURACIÓN EXCLUSIVA PARA DOCKER
+# ===================================================================
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  datasource:
+    url: jdbc:mysql://db-hospital:3306/db_notificaciones?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-hospital:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# Configuración del secreto JWT mapeado para Docker
+jwt:
+  secret: ${JWT_SECRET:ClaveSecretaSuperSeguraParaElHospital2026Base!}

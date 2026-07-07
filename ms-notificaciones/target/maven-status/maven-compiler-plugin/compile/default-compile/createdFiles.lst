@@ -1,0 +1,15 @@
+com\hospital\ms_notificaciones\dto\request\NotificacionRequestDTO.class
+com\hospital\ms_notificaciones\controller\NotificacionController.class
+com\hospital\ms_notificaciones\config\JWTAuthenticationFilter.class
+com\hospital\ms_notificaciones\service\NotificacionService.class
+com\hospital\ms_notificaciones\exception\GlobalExceptionHandler.class
+com\hospital\ms_notificaciones\config\SwaggerConfig.class
+com\hospital\ms_notificaciones\exception\ErrorResponse.class
+com\hospital\ms_notificaciones\model\Notificacion.class
+com\hospital\ms_notificaciones\repository\NotificacionRepository.class
+com\hospital\ms_notificaciones\exception\ResourceNotFoundException.class
+com\hospital\ms_notificaciones\exception\EstadoNotificacionException.class
+com\hospital\ms_notificaciones\MsNotificacionesApplication.class
+com\hospital\ms_notificaciones\config\SecurityConfig.class
+com\hospital\ms_notificaciones\dto\response\NotificacionResponseDTO.class
+com\hospital\ms_notificaciones\mapper\NotificacionMapper.class
