@@ -1,0 +1,16 @@
+Creación de usuario
+
+{
+    "nombre": "Administrador",
+    "apellido": "Prueba",
+    "telefono": "933334444",
+    "contrasena": "Administrador",
+    "roles": ["ADMIN"]
+}
+
+Inicio de sesión
+
+{
+    "email":"adm.pru@hospital.com",
+    "contrasena":"Administrador"
+}
