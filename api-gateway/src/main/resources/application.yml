@@ -1,0 +1,59 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    loadbalancer:
+      cache:
+        enabled: false
+    gateway:
+      routes:
+        - id: ms-user
+          uri: lb://ms-user
+          predicates:
+            - Path=/api/users/**
+        - id: ms-auth
+          uri: lb://ms-auth
+          predicates:
+            - Path=/api/auth/**
+        - id: ms-medicos
+          uri: lb://ms-medicos
+          predicates:
+            - Path=/api/medicos/**
+        - id: ms-pacientes
+          uri: lb://ms-pacientes
+          predicates:
+            - Path=/api/pacientes/**
+        - id: ms-citas
+          uri: lb://ms-citas
+          predicates:
+            - Path=/api/citas/**
+
+        - id: ms-facturacion
+          uri: lb://ms-facturacion
+          predicates:
+            - Path=/api/facturas/**
+
+        - id: ms-inventario
+          uri: lb://ms-inventario
+          predicates:
+            - Path=/api/inventario/**
+
+        - id: ms-recetas
+          uri: lb://ms-recetas
+          predicates:
+            - Path=/api/recetas/**
+
+        - id: ms-urgencias
+          uri: lb://ms-urgencias
+          predicates:
+            - Path=/api/urgencias/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
