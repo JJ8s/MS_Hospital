@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: ms-medicos
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_medicos?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
+    username: root
+    password: ""
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8083
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+---
+# ===================================================================
+#  CONFIGURACIÓN EXCLUSIVA PARA DOCKER
+# ===================================================================
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  datasource:
+    url: jdbc:mysql://db-hospital:3306/db_medicos?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-hospital:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 5
