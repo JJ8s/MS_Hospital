@@ -26,3 +26,8 @@ ms-user (Identity Data Layer): Microservicio puramente transaccional y aislado d
 
 ms-auth (Authorization Server): Motor de autenticación Stateless (sin estado). Intercepta credenciales, las valida delegando en ms-user y emite un token JWT firmado criptográficamente por simetría (HS512 + secreto). Permite a los demás servicios descifrar e identificar localmente al usuario y sus roles sin consultar la base de datos en cada petición.
 
+tambien aclarar que este proyecto requiere de la carpeta .mvn/wrapper/maven-wrapper.propperties:
+wrapperVersion=3.3.4
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.16/apache-maven-3.9.16-bin.zip
+se incluye aqui por la razón de que no sé implementar archivos ocultos a github ya que este no lo permite.
