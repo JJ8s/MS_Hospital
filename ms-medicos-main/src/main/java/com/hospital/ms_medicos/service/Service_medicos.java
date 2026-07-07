@@ -25,21 +25,21 @@ public class Service_medicos {
         this.repository_medicos = repository_medicos;
         this.mapper = mapper;
     }
-    /*Obtener todos*/
+    
     public List<MedicoResponseDTO> obtenerTodos() {
         return repository_medicos.findAll()
                 .stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
-    /*Obtener por ID*/
+    
     public MedicoResponseDTO obtenerPorId(Long id) {
         Model_medicos medico = repository_medicos.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Medico no encontrado con ID " + id));
         return mapper.toResponse(medico);
     }
-    /*Guardar*/
+    
     public MedicoResponseDTO guardar(MedicoRequestDTO dto) {
 
         if (repository_medicos.findByRut(dto.getRut()).isPresent()) {
@@ -49,7 +49,7 @@ public class Service_medicos {
         Model_medicos guardado = repository_medicos.save(medico);
         return mapper.toResponse(guardado);
     }
-    /*Buscar por RUT*/
+    
     public MedicoResponseDTO obtenerPorRut(String rut) {
 
         Model_medicos medico = repository_medicos.findByRut(rut)
@@ -57,7 +57,7 @@ public class Service_medicos {
                         new ResourceNotFoundException("Medico no encontrado con Rut " + rut));
         return mapper.toResponse(medico);
     }
-    /*Buscar por especialidad*/
+    
     public List<MedicoResponseDTO> obtenerPorEspecialidad(String especialidad) {
 
         List<Model_medicos> medicos = repository_medicos.findByEspecialidad(especialidad);
@@ -69,7 +69,7 @@ public class Service_medicos {
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
-    /*Actualizar*/
+    
     public MedicoResponseDTO actualizar(Long id, MedicoRequestDTO dto) {
 
         Model_medicos medico = repository_medicos.findById(id)
@@ -88,7 +88,7 @@ public class Service_medicos {
 
         return mapper.toResponse(actualizado);
     }
-    /* Eliminar */
+    
     public void eliminar(Long id) {
 
         if (!repository_medicos.existsById(id)) {

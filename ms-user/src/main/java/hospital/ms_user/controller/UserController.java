@@ -15,12 +15,13 @@ import org.springframework.web.bind.annotation.*;
 import hospital.ms_user.dto.UserCreateDTO;
 import hospital.ms_user.dto.UserResponseDTO;
 import hospital.ms_user.exception.BadRequestException;
+import hospital.ms_user.mapper.UserMapper;
 import hospital.ms_user.model.Rol;
 import hospital.ms_user.model.User;
 import hospital.ms_user.repository.RolRepository;
 import hospital.ms_user.service.UserService;
 
-// NUEVOS IMPORTS PARA SWAGGER/OPENAPI
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -36,6 +37,8 @@ import jakarta.validation.Valid;
 @Tag(name = "Usuarios", description = "Controlador principal para la gestión y administración de usuarios del hospital")
 public class UserController {
 
+    private final UserMapper userMapper = UserMapper.INSTANCE;
+
     @Autowired
     private UserService userService;
 
@@ -50,7 +53,7 @@ public class UserController {
     @GetMapping
     public List<UserResponseDTO> getAllUsers() {
         return userService.findAll().stream()
-                .map(user -> this.convertToResponseDTO(user))
+                .map(userMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -65,7 +68,7 @@ public class UserController {
             @Parameter(description = "ID del usuario a consultar", example = "1") 
             @PathVariable Long id) {
         return userService.findById(id)
-                .map(user -> this.convertToResponseDTO(user))
+                .map(userMapper::toResponseDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -77,11 +80,10 @@ public class UserController {
         @ApiResponse(responseCode = "404", description = "No se encontró ningún usuario con el correo proporcionado", content = @Content)
     })
     @GetMapping("/search")
-    public ResponseEntity<UserResponseDTO> getUserByEmail(
+    public ResponseEntity<User> getUserByEmail(
             @Parameter(description = "Correo institucional del usuario", example = "admin.prueba@hospital.com") 
             @RequestParam String autoemail) {
         return userService.findByEmail(autoemail)
-                .map(user -> this.convertToResponseDTO(user))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -114,13 +116,12 @@ public class UserController {
 
         User savedUser = userService.save(userEntity);
         
-        return new ResponseEntity<>(this.convertToResponseDTO(savedUser), HttpStatus.CREATED);
+        return new ResponseEntity<>(userMapper.toResponseDTO(savedUser), HttpStatus.CREATED);
     }
 
-    /**
-     * Intercepta peticiones DELETE incorrectas.
-     */
-    @Hidden // Se mantiene oculto de la interfaz de Swagger UI
+    
+
+    @Hidden 
     @DeleteMapping(value = {"", "/"})
     public ResponseEntity<Map<String, String>> advertirRutaIncorrecta() {
         Map<String, String> respuesta = new HashMap<>();
@@ -149,21 +150,4 @@ public class UserController {
         return ResponseEntity.ok(respuesta);
     }
 
-   
-    private UserResponseDTO convertToResponseDTO(User user) {
-        UserResponseDTO dto = new UserResponseDTO();
-        dto.setId(user.getId());
-        dto.setAutoEmail(user.getAutoEmail());
-        dto.setNombre(user.getNombre());
-        dto.setApellido(user.getApellido());
-        dto.setTelefono(user.getTelefono());
-        dto.setActive(user.isActive());
-        
-        if (user.getRoles() != null && !user.getRoles().isEmpty()) {
-            String nombreRol = user.getRoles().iterator().next().getName();
-            dto.setRole(nombreRol);
-        }
-        
-        return dto;
-    }
 }

@@ -21,7 +21,7 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Swagger: rutas completas incluyendo /v3/api-docs raíz
+                
                 .requestMatchers(
                     "/v3/api-docs",
                     "/v3/api-docs/**",

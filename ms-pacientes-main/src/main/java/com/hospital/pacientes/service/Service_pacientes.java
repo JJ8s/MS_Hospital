@@ -25,7 +25,7 @@ public class Service_pacientes {
         this.mapper = mapper;
     }
 
-    /* Obtener todos */
+    
     public List<PacienteResponseDTO> obtenerTodos() {
         return repository.findAll()
                 .stream()
@@ -33,7 +33,7 @@ public class Service_pacientes {
                 .collect(Collectors.toList());
     }
 
-    /* Obtener por ID */
+    
     public PacienteResponseDTO obtenerPorId(Long id) {
         Model_pacientes paciente = repository.findById(id)
                 .orElseThrow(() ->
@@ -41,7 +41,7 @@ public class Service_pacientes {
         return mapper.toResponse(paciente);
     }
 
-    /* Guardar */
+    
     public PacienteResponseDTO guardar(PacienteRequestDTO dto) {
         if (repository.findByRut(dto.getRut()).isPresent()) {
             throw new DuplicadoException("Ya existe un paciente con el RUT: " + dto.getRut());
@@ -51,7 +51,7 @@ public class Service_pacientes {
         return mapper.toResponse(guardado);
     }
 
-    /* Buscar por RUT */
+    
     public PacienteResponseDTO obtenerPorRut(String rut) {
         Model_pacientes paciente = repository.findByRut(rut)
                 .orElseThrow(() ->
@@ -59,7 +59,7 @@ public class Service_pacientes {
         return mapper.toResponse(paciente);
     }
 
-    /* Buscar por previsión */
+    
     public List<PacienteResponseDTO> obtenerPorPrevision(String prevision) {
         List<Model_pacientes> pacientes = repository.findByPrevision(prevision);
         if (pacientes.isEmpty()) {
@@ -71,7 +71,7 @@ public class Service_pacientes {
                 .collect(Collectors.toList());
     }
 
-    /* Actualizar */
+    
     public PacienteResponseDTO actualizar(Long id, PacienteRequestDTO dto) {
         Model_pacientes paciente = repository.findById(id)
                 .orElseThrow(() ->
@@ -87,7 +87,7 @@ public class Service_pacientes {
         return mapper.toResponse(actualizado);
     }
 
-    /* Eliminar */
+    
     public void eliminar(Long id) {
         if (!repository.existsById(id)) {
             throw new ResourceNotFoundException("No se puede eliminar, ID no encontrado: " + id);

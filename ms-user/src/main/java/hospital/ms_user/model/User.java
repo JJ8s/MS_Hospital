@@ -36,7 +36,7 @@ private String telefono;
 @NotBlank(message = "La contraseña es obligatoria")
 @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
 @Column(nullable = false)
-private String contrasena; // Cambiado para coincidir con tu último DTO
+private String contrasena; 
 
 private boolean active = true;
 

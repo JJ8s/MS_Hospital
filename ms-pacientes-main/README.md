@@ -5,7 +5,7 @@ Este microservicio gestiona la información de los pacientes siguiendo el patró
 ## Tecnologías
 * Java 17+
 * Spring Boot 3
-* MySQL (Puerto 3306 / XAMPP)
+* MySQL (Puerto 3307 / XAMPP)
 * JPA / Hibernate
 * Lombok & Jakarta Validation
 

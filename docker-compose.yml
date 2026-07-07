@@ -1,0 +1,311 @@
+name: ms-hospital
+
+x-common-app-env: &common-app-env
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-hospital:8761/eureka/
+  EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+  JWT_SECRET: "12345678901234567890123456789012"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: update
+  SPRING_SQL_INIT_MODE: never
+
+x-db-env: &db-env
+  SPRING_DATASOURCE_USERNAME: root
+  SPRING_DATASOURCE_PASSWORD: root
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: hospital-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_user
+    ports:
+      - "3307:3306"
+    volumes:
+      - hospital_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  eureka-hospital:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: eureka-hospital
+        APP_PORT: 8761
+    image: ms-hospital/eureka-hospital:local
+    container_name: hospital-eureka
+    environment:
+      EUREKA_INSTANCE_HOSTNAME: eureka-hospital
+    ports:
+      - "8761:8761"
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: api-gateway
+        APP_PORT: 8080
+    image: ms-hospital/api-gateway:local
+    container_name: hospital-api-gateway
+    environment:
+      <<: *common-app-env
+      SPRING_CLOUD_GATEWAY_ROUTES_0_ID: ms-user
+      SPRING_CLOUD_GATEWAY_ROUTES_0_URI: lb://ms-user
+      SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0: Path=/api/users/**
+      SPRING_CLOUD_GATEWAY_ROUTES_1_ID: ms-auth
+      SPRING_CLOUD_GATEWAY_ROUTES_1_URI: lb://ms-auth
+      SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0: Path=/api/auth/**
+      SPRING_CLOUD_GATEWAY_ROUTES_2_ID: ms-medicos
+      SPRING_CLOUD_GATEWAY_ROUTES_2_URI: lb://ms-medicos
+      SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_0: Path=/api/medicos/**
+      SPRING_CLOUD_GATEWAY_ROUTES_3_ID: ms-pacientes
+      SPRING_CLOUD_GATEWAY_ROUTES_3_URI: lb://ms-pacientes
+      SPRING_CLOUD_GATEWAY_ROUTES_3_PREDICATES_0: Path=/api/pacientes/**
+      SPRING_CLOUD_GATEWAY_ROUTES_4_ID: ms-citas
+      SPRING_CLOUD_GATEWAY_ROUTES_4_URI: lb://ms-citas
+      SPRING_CLOUD_GATEWAY_ROUTES_4_PREDICATES_0: Path=/api/citas/**
+      SPRING_CLOUD_GATEWAY_ROUTES_5_ID: ms-urgencias
+      SPRING_CLOUD_GATEWAY_ROUTES_5_URI: lb://ms-urgencias
+      SPRING_CLOUD_GATEWAY_ROUTES_5_PREDICATES_0: Path=/api/urgencias/**
+      SPRING_CLOUD_GATEWAY_ROUTES_6_ID: ms-inventario
+      SPRING_CLOUD_GATEWAY_ROUTES_6_URI: lb://ms-inventario
+      SPRING_CLOUD_GATEWAY_ROUTES_6_PREDICATES_0: Path=/api/productos/**
+      SPRING_CLOUD_GATEWAY_ROUTES_7_ID: ms-recetas
+      SPRING_CLOUD_GATEWAY_ROUTES_7_URI: lb://ms-recetas
+      SPRING_CLOUD_GATEWAY_ROUTES_7_PREDICATES_0: Path=/api/recetas/**
+      SPRING_CLOUD_GATEWAY_ROUTES_8_ID: ms-facturacion
+      SPRING_CLOUD_GATEWAY_ROUTES_8_URI: lb://ms-facturacion
+      SPRING_CLOUD_GATEWAY_ROUTES_8_PREDICATES_0: Path=/api/facturas/**
+      SPRING_CLOUD_GATEWAY_ROUTES_9_ID: ms-notificaciones
+      SPRING_CLOUD_GATEWAY_ROUTES_9_URI: lb://ms-notificaciones
+      SPRING_CLOUD_GATEWAY_ROUTES_9_PREDICATES_0: Path=/api/notificaciones/**
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka-hospital
+
+  ms-user:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: ms-user
+        APP_PORT: 8081
+    image: ms-hospital/ms-user:local
+    container_name: hospital-ms-user
+    environment:
+      <<: [*common-app-env, *db-env]
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_user?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SERVER_PORT: 8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_started
+
+  ms-auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: ms-auth
+        APP_PORT: 8082
+    image: ms-hospital/ms-auth:local
+    container_name: hospital-ms-auth
+    environment:
+      <<: *common-app-env
+      SERVER_PORT: 8082
+    ports:
+      - "8082:8082"
+    depends_on:
+      - eureka-hospital
+      - ms-user
+
+  ms-medicos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: ms-medicos-main
+        APP_PORT: 8083
+    image: ms-hospital/ms-medicos:local
+    container_name: hospital-ms-medicos
+    environment:
+      <<: [*common-app-env, *db-env]
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_medicos?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SERVER_PORT: 8083
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_started
+
+  ms-pacientes:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: ms-pacientes-main
+        APP_PORT: 8084
+    image: ms-hospital/ms-pacientes:local
+    container_name: hospital-ms-pacientes
+    environment:
+      <<: [*common-app-env, *db-env]
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_pacientes?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SERVER_PORT: 8084
+    ports:
+      - "8084:8084"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_started
+
+  ms-citas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: ms-citas
+        APP_PORT: 8085
+    image: ms-hospital/ms-citas:local
+    container_name: hospital-ms-citas
+    environment:
+      <<: [*common-app-env, *db-env]
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_citas?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SERVER_PORT: 8085
+    ports:
+      - "8085:8085"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_started
+      ms-medicos:
+        condition: service_started
+      ms-pacientes:
+        condition: service_started
+
+  ms-urgencia:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: ms-urgencia
+        APP_PORT: 8086
+    image: ms-hospital/ms-urgencia:local
+    container_name: hospital-ms-urgencia
+    environment:
+      <<: [*common-app-env, *db-env]
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_urgencias?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SERVER_PORT: 8086
+    ports:
+      - "8086:8086"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_started
+      ms-pacientes:
+        condition: service_started
+
+  ms-inventario:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: ms-inventario
+        APP_PORT: 8087
+    image: ms-hospital/ms-inventario:local
+    container_name: hospital-ms-inventario
+    environment:
+      <<: [*common-app-env, *db-env]
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_inventario?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SERVER_PORT: 8087
+    ports:
+      - "8087:8087"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_started
+
+  ms-recetas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: ms-recetas
+        APP_PORT: 8088
+    image: ms-hospital/ms-recetas:local
+    container_name: hospital-ms-recetas
+    environment:
+      <<: [*common-app-env, *db-env]
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_recetas?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SERVER_PORT: 8088
+    ports:
+      - "8088:8088"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_started
+      ms-inventario:
+        condition: service_started
+
+  ms-facturacion:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: ms-facturacion
+        APP_PORT: 8090
+    image: ms-hospital/ms-facturacion:local
+    container_name: hospital-ms-facturacion
+    environment:
+      <<: [*common-app-env, *db-env]
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_facturacion?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SERVER_PORT: 8090
+    ports:
+      - "8090:8090"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_started
+      ms-recetas:
+        condition: service_started
+      ms-inventario:
+        condition: service_started
+
+  ms-notificaciones:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: ms-notificaciones
+        APP_PORT: 8091
+    image: ms-hospital/ms-notificaciones:local
+    container_name: hospital-ms-notificaciones
+    environment:
+      <<: [*common-app-env, *db-env]
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_notificaciones?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SERVER_PORT: 8091
+    ports:
+      - "8091:8091"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_started
+
+volumes:
+  hospital_mysql_data:

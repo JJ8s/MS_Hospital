@@ -1,17 +1,17 @@
 package hospital.ms_user.exception;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class ErrorResponse {
+
     private int status;
     private String mensaje;
-    private long timestamp = System.currentTimeMillis();
+    private long timestamp;
 
     public ErrorResponse(int status, String mensaje) {
         this.status = status;
@@ -19,6 +19,3 @@ public class ErrorResponse {
         this.timestamp = System.currentTimeMillis();
     }
 }
-    
-
-

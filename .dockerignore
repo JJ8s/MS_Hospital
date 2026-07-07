@@ -1,0 +1,14 @@
+**/target
+**/.mvn
+**/.settings
+**/.classpath
+**/.project
+**/.idea
+**/*.iml
+**/mvnw.cmd
+**/HELP.md
+ms-medicos-main/src/main/java/com/hospital/ms_medicos/ms-user
+.git
+.gitignore
+docker-compose.yml
+DOCKER-GUIA.md

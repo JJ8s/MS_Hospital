@@ -6,7 +6,7 @@ spring:
     name: ms-citas
 
   datasource:
-    url: jdbc:mysql://localhost:3306/db_citas?createDatabaseIfNotExist=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3307/db_citas?createDatabaseIfNotExist=true&serverTimezone=UTC
     username: root
     password:
     driver-class-name: com.mysql.cj.jdbc.Driver

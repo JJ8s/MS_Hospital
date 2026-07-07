@@ -14,12 +14,12 @@ public class ProductoService {
     @Autowired
     private ProductoRepository productoRepository;
 
-    // Listar todos los productos
+    
     public List<Producto> listarTodos() {
         return productoRepository.findAll();
     }
 
-    // Guardar un producto nuevo con validaciones de negocio
+    
     @Transactional
     public Producto guardar(Producto producto) {
 
@@ -34,13 +34,13 @@ public class ProductoService {
         return productoRepository.save(producto);
     }
 
-    // Buscar por ID 
+    
     public Producto buscarPorId(Long id) {
         return productoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Stock Error: No se encontró el producto con ID " + id));
     }
 
-    // Actualizar producto 
+    
     @Transactional
     public Producto actualizar(Long id, Producto detallesActualizados) {
         Producto productoExistente = buscarPorId(id);
@@ -53,7 +53,7 @@ public class ProductoService {
         return productoRepository.save(productoExistente);
     }
 
-    // Ajustar Stock 
+    
     @Transactional
     public void reducirStock(Long id, Integer cantidad) {
         Producto producto = buscarPorId(id);
@@ -72,7 +72,7 @@ public class ProductoService {
         productoRepository.save(producto);
     }
 
-    // Eliminar
+    
     @Transactional
     public void eliminar(Long id) {
         if (!productoRepository.existsById(id)) {

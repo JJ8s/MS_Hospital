@@ -16,11 +16,11 @@ public class Receta {
 
     @NotNull(message = "El ID del paciente es obligatorio")
     @Column(nullable = false)
-    private Long pacienteId; // Referencia lógica al ms-pacientes
+    private Long pacienteId; 
 
     @NotNull(message = "El ID del producto (medicamento) es obligatorio")
     @Column(nullable = false)
-    private Long productoId; // Referencia lógica al ms-inventario
+    private Long productoId; 
 
     @NotNull(message = "La cantidad es obligatoria")
     @Min(value = 1, message = "La cantidad debe ser al menos 1")

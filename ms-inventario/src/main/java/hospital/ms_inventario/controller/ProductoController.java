@@ -23,13 +23,13 @@ public class ProductoController {
     @Autowired
     private ProductoRepository productoRepository;
 
-    // 1. Obtener todos 
+    
     @GetMapping
     public ResponseEntity<List<Producto>> listar() {
         return ResponseEntity.ok(productoService.listarTodos());
     }
 
-    // 2. Obtener por ID 
+    
     @GetMapping("/{id}")
     public ResponseEntity<?> obtenerPorId(@PathVariable Long id) {
         try {
@@ -40,13 +40,13 @@ public class ProductoController {
         }
     }
 
-    // 3. Crear 
+    
     @PostMapping
     public ResponseEntity<Producto> crear(@Valid @RequestBody Producto producto) {
         return new ResponseEntity<>(productoService.guardar(producto), HttpStatus.CREATED);
     }
 
-    // 4. Actualizar 
+    
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizar(@PathVariable Long id, @Valid @RequestBody Producto detalles) {
         try {
@@ -60,7 +60,7 @@ public class ProductoController {
         }
     }
 
-    // 5. Ajustar stock 
+    
     @PutMapping("/{id}/reducir-stock")
     public ResponseEntity<String> reducirStock(@PathVariable Long id, @RequestParam Integer cantidad) {
         try {
@@ -77,7 +77,7 @@ public class ProductoController {
         return ResponseEntity.ok("Stock repuesto: +" + cantidad);
     }
 
-    // 6. Eliminar 
+    
     @DeleteMapping("/{id}")
     public ResponseEntity<String> eliminar(@PathVariable Long id) {
         return productoRepository.findById(id).map(producto -> {

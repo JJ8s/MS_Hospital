@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 String username = claims.getSubject();
 
-                // Lectura flexible: soporta List<String> o String simple
+                
                 Object rolesObject = claims.get("roles");
                 List<String> roles = new ArrayList<>();
 
@@ -52,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     roles.add((String) rolesObject);
                 }
 
-                // Normalización: asegura el prefijo ROLE_ limpiando espacios
+                
                 List<SimpleGrantedAuthority> authorities = roles.stream()
                         .map(rol -> {
                             rol = rol.trim();

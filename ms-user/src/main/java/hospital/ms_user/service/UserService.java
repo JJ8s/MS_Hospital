@@ -40,12 +40,12 @@ public class UserService {
         int letrasNombre = 3; 
         boolean correoDuplicado = true;
 
-        // 2. Bucle de resolución de colisiones en cascada (3 letras -> 4 letras -> ... -> nombre + número)
+        
         while (correoDuplicado) {
             int limite = Math.min(letrasNombre, nombreLimpio.length());
             String subNombre = nombreLimpio.substring(0, limite);
             
-            // Si el contador supera el tamaño del nombre, añadimos un sufijo numérico incremental
+            
             if (letrasNombre > nombreLimpio.length()) {
                 int sufijoNumerico = letrasNombre - nombreLimpio.length();
                 correoGenerado = subNombre + sufijoNumerico + "." + apellidoLimpio + "@hospital.com";
@@ -53,42 +53,39 @@ public class UserService {
                 correoGenerado = subNombre + "." + apellidoLimpio + "@hospital.com";
             }
 
-            // Comprobamos la disponibilidad real en la base de datos
+            
             if (userRepository.existsByAutoEmail(correoGenerado)) {
-                letrasNombre++; // Siguiente iteración intentará con una letra extra
+                letrasNombre++; 
             } else {
-                correoDuplicado = false; // Rompemos el ciclo al encontrar un correo libre
+                correoDuplicado = false; 
             }
         }
         
-        // Asignamos el email institucional único calculado
+        
         user.setAutoEmail(correoGenerado);
 
-        // 3. Validación de integridad del Teléfono
+        
         if (userRepository.existsByTelefono(user.getTelefono())) {
             throw new BadRequestException("El número de teléfono ya está en uso");
         }
 
-        // 4. VALIDACIÓN OBLIGATORIA DE ROL
+        
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             throw new BadRequestException("El usuario debe tener al menos un rol asignado obligatoriamente.");
         }
 
-        // 5. Encriptación de la contraseña (DESHABILITADA TEMPORALMENTE)
-        // String contraseñaEncriptada = passwordEncoder.encode(user.getContrasena());
-        // user.setContrasena(contraseñaEncriptada);
-
-        // En su lugar, asignamos la contraseña tal cual llega (texto plano)
-        user.setContrasena(user.getContrasena());
-
-        // 6. Activación automática de la cuenta
+        
+        String contraseñaEncriptada = passwordEncoder.encode(user.getContrasena());
+        user.setContrasena(contraseñaEncriptada);
+        
+        
         user.setActive(true);
-
+        
         return userRepository.save(user);
     }
-    /**
-     * Elimina usuario a través de su correo electrónico institucional.
-     */
+
+    
+
     @Transactional
     public void deleteByEmail(String email) {
         if (!userRepository.existsByAutoEmail(email)) {

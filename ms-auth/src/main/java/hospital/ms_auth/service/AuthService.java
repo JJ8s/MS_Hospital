@@ -26,7 +26,7 @@ public class AuthService {
 
     @SuppressWarnings("unchecked")
     public String login(String email, String contrasena) {
-        // Llama a ms-user a través de la interfaz Feign que acabamos de crear
+        
         Map<String, Object> user = authCliente.getUserByAutoEmail(email);
         
         if (user == null) {
@@ -41,23 +41,23 @@ public class AuthService {
 
         List<String> misRoles = new ArrayList<>();
         
-        // EXTRAER ROLES REALES: Mapeamos la colección 'roles' que viene desde ms-user
+        
         if (user.get("roles") != null) {
             List<Map<String, Object>> rolesList = (List<Map<String, Object>>) user.get("roles");
             for (Map<String, Object> r : rolesList) {
-                String roleName = (String) r.get("name"); // Extrae 'ROLE_ADMIN', 'ROLE_MEDICO', etc.
+                String roleName = (String) r.get("name"); 
                 if (roleName != null) {
                     misRoles.add(roleName);
                 }
             }
         }
 
-        // Si por alguna razón la lista quedó vacía, dejamos un fallback seguro
+        
         if (misRoles.isEmpty()) {
             misRoles.add("ROLE_PACIENTE");
         }
         
-        // Genera el token con el correo y los roles reales obtenidos de la base de datos
+        
         return jwtUtils.createToken(email, misRoles);
     }
 }

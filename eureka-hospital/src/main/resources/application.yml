@@ -5,7 +5,6 @@ eureka:
   instance:
     hostname: localhost
   client:
-    # Como este es el servidor, le decimos que no intente registrarse a sí mismo
     register-with-eureka: false
     fetch-registry: false
     service-url:
