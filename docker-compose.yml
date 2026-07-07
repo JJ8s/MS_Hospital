@@ -1,0 +1,235 @@
+services:
+  # BASE DE DATOS CENTRALIZADA EN DOCKER
+  db-hospital:
+    image: mysql:8.0
+    container_name: db-hospital
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_user
+    ports:
+      - "3306:3306"
+    volumes:
+      - database_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 0. SERVIDOR EUREKA
+  eureka-hospital:
+    build: ./eureka-hospital
+    container_name: eureka-hospital
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      db-hospital:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8761"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # MICROSERVICIOS DE NEGOCIO (NÚCLEO CENTRAL)
+  ms-user:
+    build: ./ms-user
+    container_name: ms-user
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-hospital:3306/db_user?createDatabaseIfNotExist=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-hospital:8761/eureka/
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      db-hospital:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_healthy
+
+  ms-auth:
+    build: ./ms-auth
+    container_name: ms-auth
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-hospital:3306/db_auth?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-hospital:8761/eureka/
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      db-hospital:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_healthy
+
+  ms-medicos:
+    build:
+      context: ./ms-medicos-main
+      dockerfile: Dockerfile
+    container_name: ms-medicos
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-hospital:3306/db_medicos?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-hospital:8761/eureka/
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      db-hospital:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_healthy
+
+  ms-citas:
+    build: ./ms-citas
+    container_name: ms-citas
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-hospital:3306/db_citas?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-hospital:8761/eureka/
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      db-hospital:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_healthy
+
+  ms-pacientes:
+    build: ./ms-pacientes-main
+    container_name: ms-pacientes
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-hospital:3306/db_pacientes?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-hospital:8761/eureka/
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      db-hospital:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_healthy
+
+  ms-facturacion:
+    build: ./ms-facturacion
+    container_name: ms-facturacion
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-hospital:3306/db_facturacion?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-hospital:8761/eureka/
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      db-hospital:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_healthy
+      ms-inventario:
+        condition: service_started
+      ms-recetas:
+        condition: service_started
+
+  ms-inventario:
+    build: ./ms-inventario
+    container_name: ms-inventario
+    ports:
+      - "8087:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-hospital:3306/db_inventario?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-hospital:8761/eureka/
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      db-hospital:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_healthy
+
+  ms-urgencia:
+    build: ./ms-urgencia
+    container_name: ms-urgencia
+    ports:
+      - "8088:8088"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-hospital:3306/db_urgencia?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-hospital:8761/eureka/
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      db-hospital:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_healthy
+
+  ms-notificaciones:
+    build: ./ms-notificaciones
+    container_name: ms-notificaciones
+    ports:
+      - "8089:8089"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-hospital:3306/db_notificaciones?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-hospital:8761/eureka/
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      db-hospital:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_healthy
+
+  ms-recetas:
+    build: ./ms-recetas
+    container_name: ms-recetas
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-hospital:3306/db_recetas?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-hospital:8761/eureka/
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      db-hospital:
+        condition: service_healthy
+      eureka-hospital:
+        condition: service_healthy
+      ms-inventario:
+        condition: service_started
+
+  # 1. API GATEWAY (Punto de entrada unificado listo e independiente)
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-hospital:8761/eureka/
+
+volumes:
+  database_data:
