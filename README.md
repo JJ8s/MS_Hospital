@@ -1,3 +1,8 @@
+Para hacer un resumen estos son todos los microservicios alterados 
+para funcionar completamente en docker ayudandonos a iniciar todos 
+los microservicios al mismo tiempo y evitar errores de localhost
+
+
 MicroServicios funcionando con Docker, comandos basicos:
 
 ./mvnw clean package -DskipTests     para limpiar todos los microservicios
