@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: ms-user
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_user?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
+    username: root
+    password: ""
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  sql:
+    init:
+      mode: always # Fuerza a Spring Boot a buscar y ejecutar siempre el archivo data.sql
+
+  jpa:
+    show-sql: true
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: create # En local mantén 'create' si deseas limpiar tus tablas al iniciar
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8081
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+---
+# ===================================================================
+# 🌟 CONFIGURACIÓN EXCLUSIVA PARA DOCKER
+# ===================================================================
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  datasource:
+    # 🔗 Apunta al contenedor 'db-hospital' y cambia el password a 'root'
+    url: jdbc:mysql://db-hospital:3306/db_user?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: update # 🌟 Evita errores de roles duplicados o caídas al reiniciar contenedores
+
+eureka:
+  client:
+    service-url:
+      # 🔗 Apunta al contenedor 'eureka-hospital' en lugar de localhost
+      defaultZone: http://eureka-hospital:8761/eureka/
+  instance:
+    prefer-ip-address: true # Ayuda al balanceador de carga del API Gateway
+
+    logging:
+      level:
+        org.springframework.security: DEBUG
