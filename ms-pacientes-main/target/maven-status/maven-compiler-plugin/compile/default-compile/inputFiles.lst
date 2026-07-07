@@ -1,0 +1,15 @@
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\config\SwaggerConfig.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\controller\Controller_pacientes.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\dto\request\PacienteRequestDTO.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\dto\response\PacienteResponseDTO.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\exception\ApiError.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\exception\DuplicadoException.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\exception\GlobalExceptionHandler.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\exception\ResourceNotFoundException.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\mapper\PacienteMapper.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\model\Model_pacientes.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\MsPacientesApplication.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\repository\Repository_pacientes.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\security\JwtAuthenticationFilter.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\security\SecurityConfig.java
+C:\Users\Usuario 1\Documents\Desktop\MS_Hospital-Desarrollo_anderson\ms-pacientes-main\src\main\java\com\hospital\pacientes\service\Service_pacientes.java
