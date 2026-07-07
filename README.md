@@ -16,3 +16,13 @@ docker-compose down                  para apagar todos los microservicios
 
 docker-compose logs -f               para ver la actidad de los microservicios
 
+Mi parte es encargarme de los micro-servicios Eureka-hospital, Api-gateway, Ms-user y Ms-auth
+
+Eureka Server (Registry): Base de datos dinámica en memoria donde cada microservicio inyecta de forma autónoma su IP, puerto y estado de salud al arrancar, resolviendo de forma centralizada la localización física de los nodos de la red sin usar configuraciones estáticas (hardcoding).
+
+API Gateway (Proxy/Routing): Punto único perimetral (puerto 8080) construido sobre programación reactiva no bloqueante. Evalúa las peticiones mediante Predicados de ruta (ej. /api/facturas/), consulta a Eureka para resolver la IP del destino y enruta el tráfico aplicando Filtros transversales de seguridad y CORS.
+
+ms-user (Identity Data Layer): Microservicio puramente transaccional y aislado de dominio (IAM). Su única función es la persistencia y lectura en base de datos de identidades, perfiles y contraseñas encriptadas con la función hash criptográfica adaptativa BCrypt bajo un modelo RBAC (Role-Based Access Control).
+
+ms-auth (Authorization Server): Motor de autenticación Stateless (sin estado). Intercepta credenciales, las valida delegando en ms-user y emite un token JWT firmado criptográficamente por simetría (HS512 + secreto). Permite a los demás servicios descifrar e identificar localmente al usuario y sus roles sin consultar la base de datos en cada petición.
+
